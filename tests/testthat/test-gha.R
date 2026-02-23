@@ -9,12 +9,6 @@ test_that("vouch_gha writes every workflow from inst templates", {
     "sync-codeowners"
   )
 
-  template_dir <- normalizePath(
-    testthat::test_path("..", "..", "inst", "vouch_example_workflows"),
-    winslash = "/",
-    mustWork = TRUE
-  )
-
   temp_proj <- tempfile("voucher-test-")
   dir.create(temp_proj)
   old_wd <- setwd(temp_proj)
@@ -24,7 +18,7 @@ test_that("vouch_gha writes every workflow from inst templates", {
     expect_invisible(suppressMessages(voucher:::vouch_gha(action)))
 
     workflow_path <- fs::path(".github", "workflows", paste0(action, ".yaml"))
-    template_path <- fs::path(template_dir, paste0(action, ".yaml"))
+    template_path <- voucher:::find_vouch_workflow_template(action)
 
     expect_true(file.exists(workflow_path), info = action)
     expect_equal(
