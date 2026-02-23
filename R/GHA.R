@@ -11,15 +11,21 @@ vouch_gha <- function(
     "sync-codeowners"
   )
 ) {
-  action <- match.arg(action)
+  if (missing(action)) {
+    cli::cli_abort(
+      c(
+        "{.arg action} must be provided.",
+        "x" = "No workflow action was selected"
+      )
+    )
+  }
+  action <- match.arg(action, several.ok = TRUE)
 
   workflow_path <- fs::path(".github", "workflows", paste0(action, ".yaml"))
-  template_lines <- readLines(
-    find_vouch_workflow_template(action),
-    warn = FALSE
-  )
+  find_vouch_workflow_template(action) |>
+    readLines(warn = FALSE) |>
+    write_to_path(workflow_path)
 
-  write_to_path(template_lines, workflow_path)
   cli::cli_alert_info(
     "Wrote GitHub Actions workflow to {.path {workflow_path}}."
   )
