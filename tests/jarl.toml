@@ -1,0 +1,4 @@
+[lint]
+# ignore jarl warnings about ::: in testthat dir only.
+ignore = ["internal_function"]
+extend-select = ["TESTTHAT"]
