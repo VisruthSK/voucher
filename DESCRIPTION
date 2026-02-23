@@ -2,18 +2,20 @@ Package: voucher
 Title: R Interface to vouch
 Version: 0.0.0.9000
 Authors@R: 
-    person("Visruth", "Srimath Kandali", , "public@visruth.com", role = c("aut", "cre"))
+    person("Visruth", "Srimath Kandali", , "public@visruth.com", role = c("aut", "cre"),
+           comment = c(ORCID = "0009-0005-9097-0688"))
 Description: An R interface for the vouch project, which bills itself as
     "a community trust management system based on explicit vouches to
-    participate." vouch is natively a nushell module, so voucher provides
-    a R API to umodify the VOUCHED.td database without nushell.
+    participate." vouch is a nushell module, so voucher provides a R API
+    to modify the VOUCHED.td database without nushell. voucher does not
+    depend on vouch or nushell. <https://github.com/mitchellh/vouch>
 License: GPL (>= 3)
-Encoding: UTF-8
-Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
 Imports: 
     cli,
     fs
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
