@@ -1,0 +1,19 @@
+# Workflow from https://github.com/mitchellh/vouch/tree/main/action/sync-codeowners
+on:
+  schedule:
+    - cron: "0 0 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: mitchellh/vouch/action/sync-codeowners@v1
+        with:
+          repo: ${{ github.repository }}
