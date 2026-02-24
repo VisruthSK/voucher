@@ -14,10 +14,10 @@
     Message
       v Added (carol) to vouched contributors
 
-# denounce preview trims reason and does not write
+# denounce preview includes reason and does not write
 
     Code
-      result <- withVisible(voucher:::denounce("bob", reason = "  bad actor  "))
+      result <- withVisible(voucher:::denounce("bob", reason = "bad actor"))
     Output
       # header
       alice
