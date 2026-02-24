@@ -5,7 +5,7 @@ This checks if a user is vouched, denounced, or unknown.
 ## Usage
 
 ``` r
-check(username, default_platform = "", vouched_file = "")
+check(username, default_platform = "", vouched_file = "", blame = FALSE)
 ```
 
 ## Arguments
@@ -22,6 +22,10 @@ check(username, default_platform = "", vouched_file = "")
 
   Path to vouched contributors file (default: `VOUCHED.td` or
   `.github/VOUCHED.td`).
+
+- blame:
+
+  Include git blame author for a matched entry when available.
 
 ## Value
 
