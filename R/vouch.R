@@ -96,6 +96,7 @@ denounce <- function(
 #' @param default_platform Assumed platform for entries without explicit platform.
 #' @param vouched_file Path to vouched contributors file (default:
 #'   `VOUCHED.td` or `.github/VOUCHED.td`).
+#' @param blame Include git blame author for a matched entry when available.
 #'
 #' @return One of `"vouched"`, `"denounced"`, or `"unknown"`.
 #'
@@ -110,38 +111,93 @@ denounce <- function(
 check <- function(
   username,
   default_platform = "",
-  vouched_file = ""
+  vouched_file = "",
+  blame = FALSE
 ) {
   file <- vouch_resolve_existing_file(vouched_file)
   target <- vouch_split_handle(username, default_platform = default_platform)
-  status <- "unknown"
-
-  for (line in readLines(file, warn = FALSE)) {
-    entry <- vouch_parse_line(line, default_platform = default_platform)
-    if (is.null(entry)) {
-      next
-    }
-
-    platform_matches <- !nzchar(target$platform) ||
-      !nzchar(entry$platform) ||
-      identical(entry$platform, target$platform)
-
-    if (identical(entry$username, target$username) && platform_matches) {
-      status <- if (identical(entry$type, "denounce")) {
-        "denounced"
-      } else {
-        "vouched"
-      }
-      break
-    }
+  parsed_lines <- readLines(file, warn = FALSE) |>
+    lapply(vouch_parse_line, default_platform = default_platform)
+  matched_line <- parsed_lines |>
+    vapply(vouch_entry_matches_target, logical(1), target = target) |>
+    which() |>
+    (\(idx) if (length(idx) > 0L) idx[[1]] else NA_integer_)()
+  status <- if (is.na(matched_line)) {
+    "unknown"
+  } else if (identical(parsed_lines[[matched_line]]$type, "denounce")) {
+    "denounced"
+  } else {
+    "vouched"
   }
 
-  cli::cli_alert_info("{username} is {status}")
+  blame_username <- if (isTRUE(blame) && !is.na(matched_line)) {
+    vouch_git_blame_username(file, matched_line)
+  } else {
+    ""
+  }
+  if (isTRUE(blame) && !is.na(matched_line) && !nzchar(blame_username)) {
+    cli::cli_warn(
+      "Unable to resolve git blame author for {.path {file}} line {matched_line}."
+    )
+  }
+
+  status_message <- if (nzchar(blame_username)) {
+    "{username} is {status} (git blame: {blame_username})"
+  } else {
+    "{username} is {status}"
+  }
+  cli::cli_alert_info(status_message)
 
   invisible(status)
 }
 
 # Helpers ---------------------------------------------------------------------
+
+vouch_entry_matches_target <- function(entry, target) {
+  if (is.null(entry)) {
+    return(FALSE)
+  }
+
+  platform_matches <- !nzchar(target$platform) ||
+    !nzchar(entry$platform) ||
+    identical(entry$platform, target$platform)
+
+  identical(entry$username, target$username) && platform_matches
+}
+
+vouch_git_blame_username <- function(filepath, line_number) {
+  if (!nzchar(Sys.which("git")) || is.na(line_number)) {
+    return("")
+  }
+
+  output <- tryCatch(
+    suppressWarnings(system2(
+      "git",
+      c(
+        "blame",
+        "--line-porcelain",
+        paste0("-L", line_number, ",", line_number),
+        "--",
+        filepath
+      ),
+      stdout = TRUE,
+      stderr = TRUE
+    )),
+    error = function(...) character()
+  )
+
+  status <- attr(output, "status", exact = TRUE)
+  if (!is.null(status) && !identical(status, 0L)) {
+    return("")
+  }
+
+  author_line <- grep("^author\\s+", output, value = TRUE)[1]
+  if (is.na(author_line)) {
+    return("")
+  }
+
+  sub("^author\\s+", "", author_line)
+}
 
 vouch_update_file <- function(
   username,
@@ -176,15 +232,7 @@ vouch_update_file <- function(
         existing,
         function(line) {
           entry <- vouch_parse_line(line, default_platform = default_platform)
-          if (is.null(entry)) {
-            return(TRUE)
-          }
-
-          platform_matches <- !nzchar(target$platform) ||
-            !nzchar(entry$platform) ||
-            identical(entry$platform, target$platform)
-
-          !(identical(entry$username, target$username) && platform_matches)
+          is.null(entry) || !vouch_entry_matches_target(entry, target)
         },
         logical(1)
       )

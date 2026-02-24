@@ -131,6 +131,65 @@ test_that("check default_platform changes matching for unqualified handles", {
   expect_equal(none$value, "denounced")
 })
 
+test_that("check includes git blame author when blame is TRUE", {
+  skip_on_cran()
+  skip_if_not(nzchar(Sys.which("git")))
+
+  temp_proj <- tempfile("voucher-test-")
+  dir.create(temp_proj)
+  old_wd <- setwd(temp_proj)
+  on.exit(setwd(old_wd), add = TRUE)
+
+  git <- function(...) {
+    suppressWarnings(system2(
+      "git",
+      c(...),
+      stdout = TRUE,
+      stderr = TRUE
+    ))
+  }
+
+  init <- git("init")
+  if (!is.null(attr(init, "status", exact = TRUE))) {
+    skip("git init failed in test environment")
+  }
+
+  git("config", "user.name", "VoucherBlameTest")
+  git("config", "user.email", "voucher@example.com")
+
+  writeLines("alice", "VOUCHED.td")
+  git("add", "VOUCHED.td")
+  commit <- git("commit", "-m", "add-alice")
+  if (!is.null(attr(commit, "status", exact = TRUE))) {
+    skip("git commit failed in test environment")
+  }
+
+  expect_snapshot(
+    result <- withVisible(voucher:::check("alice", blame = TRUE)),
+    cran = FALSE
+  )
+
+  expect_false(result$visible)
+  expect_equal(result$value, "vouched")
+})
+
+test_that("check warns when blame is requested but unavailable", {
+  temp_proj <- tempfile("voucher-test-")
+  dir.create(temp_proj)
+  old_wd <- setwd(temp_proj)
+  on.exit(setwd(old_wd), add = TRUE)
+
+  writeLines("alice", "VOUCHED.td")
+
+  expect_warning(
+    result <- withVisible(voucher:::check("alice", blame = TRUE)),
+    "Unable to resolve git blame author"
+  )
+
+  expect_false(result$visible)
+  expect_equal(result$value, "vouched")
+})
+
 test_that("check errors when file is missing and handles empty file", {
   temp_proj <- tempfile("voucher-test-")
   dir.create(temp_proj)
