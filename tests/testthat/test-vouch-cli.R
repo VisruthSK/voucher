@@ -200,6 +200,98 @@ test_that("check default_platform changes matching for unqualified handles", {
   })
 })
 
+test_that("check includes git blame author when blame is TRUE", {
+  skip_on_cran()
+  skip_if_not(nzchar(Sys.which("git")))
+
+  temp_proj <- tempfile("voucher-test-")
+  dir.create(temp_proj)
+  old_wd <- setwd(temp_proj)
+  on.exit(setwd(old_wd), add = TRUE)
+
+  git <- function(...) {
+    suppressWarnings(system2(
+      "git",
+      c(...),
+      stdout = TRUE,
+      stderr = TRUE
+    ))
+  }
+
+  init <- git("init")
+  if (!is.null(attr(init, "status", exact = TRUE))) {
+    skip("git init failed in test environment")
+  }
+
+  git("config", "user.name", "VoucherBlameTest")
+  git("config", "user.email", "voucher@example.com")
+
+  writeLines("alice", "VOUCHED.td")
+  git("add", "VOUCHED.td")
+  commit <- git("commit", "-m", "add-alice")
+  if (!is.null(attr(commit, "status", exact = TRUE))) {
+    skip("git commit failed in test environment")
+  }
+
+  expect_snapshot(
+    result <- withVisible(voucher:::check("alice", blame = TRUE)),
+    cran = FALSE
+  )
+
+  expect_false(result$visible)
+  expect_equal(result$value, "vouched")
+})
+
+test_that("check warns when blame is requested but unavailable", {
+  temp_proj <- tempfile("voucher-test-")
+  dir.create(temp_proj)
+  old_wd <- setwd(temp_proj)
+  on.exit(setwd(old_wd), add = TRUE)
+
+  writeLines("alice", "VOUCHED.td")
+
+  expect_warning(
+    result <- withVisible(voucher:::check("alice", blame = TRUE)),
+    "Unable to resolve git blame author"
+  )
+
+  expect_false(result$visible)
+  expect_equal(result$value, "vouched")
+})
+
+test_that("check with blame handles unknown users", {
+  vouch_with_temp_project({
+    writeLines("alice", "VOUCHED.td")
+
+    expect_warning(
+      result <- withVisible(voucher:::check("charlie", blame = TRUE)),
+      NA
+    )
+
+    expect_invisible_value(result, "unknown")
+  })
+})
+
+test_that("check includes mocked git blame author in status message", {
+  vouch_with_temp_project({
+    writeLines("alice", "VOUCHED.td")
+    local_mocked_bindings(
+      vouch_git_blame_username = function(filepath, line_number) {
+        expect_equal(basename(filepath), "VOUCHED.td")
+        expect_equal(line_number, 1L)
+        "Mock Author"
+      },
+      .package = "voucher"
+    )
+
+    expect_message(
+      result <- withVisible(voucher:::check("alice", blame = TRUE)),
+      "alice is vouched \\(Mock Author\\)"
+    )
+    expect_invisible_value(result, "vouched")
+  })
+})
+
 test_that("check errors when file is missing and handles empty file", {
   vouch_with_temp_project({
     expect_error(voucher:::check("nobody"), "no VOUCHED file found")
@@ -255,4 +347,66 @@ test_that("file resolution helper branches", {
       "custom.td"
     )
   })
+})
+
+test_that("vouch_git_blame_username covers guard and porcelain parsing branches", {
+  expect_equal(
+    voucher:::vouch_git_blame_username("VOUCHED.td", NA_integer_),
+    ""
+  )
+
+  expect_equal(
+    with_mocked_bindings(
+      voucher:::vouch_git_blame_username("VOUCHED.td", 1L),
+      Sys.which = function(...) "",
+      .package = "base"
+    ),
+    ""
+  )
+
+  expect_equal(
+    with_mocked_bindings(
+      voucher:::vouch_git_blame_username("VOUCHED.td", 1L),
+      Sys.which = function(...) "/fake/git",
+      system2 = function(...) {
+        out <- "fatal: bad revision"
+        attr(out, "status") <- 128L
+        out
+      },
+      .package = "base"
+    ),
+    ""
+  )
+
+  expect_equal(
+    with_mocked_bindings(
+      voucher:::vouch_git_blame_username("VOUCHED.td", 1L),
+      Sys.which = function(...) "/fake/git",
+      system2 = function(...) stop("boom"),
+      .package = "base"
+    ),
+    ""
+  )
+
+  expect_equal(
+    with_mocked_bindings(
+      voucher:::vouch_git_blame_username("VOUCHED.td", 1L),
+      Sys.which = function(...) "/fake/git",
+      system2 = function(...) c("committer Someone", "summary line"),
+      .package = "base"
+    ),
+    ""
+  )
+
+  expect_equal(
+    with_mocked_bindings(
+      voucher:::vouch_git_blame_username("VOUCHED.td", 1L),
+      Sys.which = function(...) "/fake/git",
+      system2 = function(...) {
+        c("author Jane Doe", "author-mail <jane@example.com>")
+      },
+      .package = "base"
+    ),
+    "Jane Doe"
+  )
 })

@@ -60,6 +60,13 @@
     Message
       i bob is denounced
 
+# check includes git blame author when blame is TRUE
+
+    Code
+      result <- withVisible(voucher:::check("alice", blame = TRUE))
+    Message
+      i alice is vouched (VoucherBlameTest)
+
 # check errors when file is missing and handles empty file
 
     Code

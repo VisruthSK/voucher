@@ -4,7 +4,7 @@
 \alias{check}
 \title{Check a user's vouch status.}
 \usage{
-check(username, default_platform = "", vouched_file = "")
+check(username, default_platform = "", vouched_file = "", blame = FALSE)
 }
 \arguments{
 \item{username}{Username to check (supports \code{platform:user} format).}
@@ -13,6 +13,8 @@ check(username, default_platform = "", vouched_file = "")
 
 \item{vouched_file}{Path to vouched contributors file (default:
 \code{VOUCHED.td} or \code{.github/VOUCHED.td}).}
+
+\item{blame}{Include git blame author for a matched entry when available.}
 }
 \value{
 One of \code{"vouched"}, \code{"denounced"}, or \code{"unknown"}.

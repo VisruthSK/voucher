@@ -98,6 +98,7 @@ denounce <- function(
 #' @param default_platform Assumed platform for entries without explicit platform.
 #' @param vouched_file Path to vouched contributors file (default:
 #'   `VOUCHED.td` or `.github/VOUCHED.td`).
+#' @param blame Include git blame author for a matched entry when available.
 #'
 #' @return One of `"vouched"`, `"denounced"`, or `"unknown"`.
 #'
@@ -113,38 +114,80 @@ denounce <- function(
 check <- function(
   username,
   default_platform = "",
-  vouched_file = ""
+  vouched_file = "",
+  blame = FALSE
 ) {
   file <- vouch_resolve_existing_file(vouched_file)
   usernames <- as.character(username)
   entries <- readLines(file, warn = FALSE) |>
     lapply(vouch_parse_line, default_platform = default_platform)
-  statuses <- vapply(
+  matched_lines <- vapply(
     usernames,
     function(user) {
       target <- vouch_split_handle(user, default_platform = default_platform)
+      idx <- which(vapply(
+        entries,
+        vouch_entry_matches_target,
+        logical(1),
+        target = target
+      ))
 
-      for (entry in entries) {
-        if (vouch_entry_matches_target(entry, target)) {
-          return(
-            if (identical(entry$type, "denounce")) {
-              "denounced"
-            } else {
-              "vouched"
-            }
-          )
-        }
+      if (length(idx) > 0L) {
+        idx[[1]]
+      } else {
+        NA_integer_
       }
-
-      "unknown"
+    },
+    integer(1)
+  )
+  statuses <- vapply(
+    matched_lines,
+    \(matched_line) {
+      if (is.na(matched_line)) {
+        "unknown"
+      } else if (identical(entries[[matched_line]]$type, "denounce")) {
+        "denounced"
+      } else {
+        "vouched"
+      }
     },
     character(1)
   )
+  blame_usernames <- if (isTRUE(blame)) {
+    vapply(
+      matched_lines,
+      \(matched_line) {
+        if (is.na(matched_line)) {
+          ""
+        } else {
+          vouch_git_blame_username(file, matched_line)
+        }
+      },
+      character(1)
+    )
+  } else {
+    rep("", length(matched_lines))
+  }
 
   Map(
-    \(user, status) cli::cli_alert_info("{user} is {status}"),
+    \(user, status, matched_line, blame_username) {
+      if (isTRUE(blame) && !is.na(matched_line) && !nzchar(blame_username)) {
+        cli::cli_warn(
+          "Unable to resolve git blame author for {.path {file}} line {matched_line}."
+        )
+      }
+
+      status_message <- if (nzchar(blame_username)) {
+        "{user} is {status} ({blame_username})"
+      } else {
+        "{user} is {status}"
+      }
+      cli::cli_alert_info(status_message)
+    },
     usernames,
-    statuses
+    statuses,
+    matched_lines,
+    blame_usernames
   )
 
   if (length(statuses) == 1L) {
@@ -156,6 +199,52 @@ check <- function(
 }
 
 # Helpers ---------------------------------------------------------------------
+
+vouch_entry_matches_target <- function(entry, target) {
+  if (is.null(entry)) {
+    return(FALSE)
+  }
+
+  platform_matches <- !nzchar(target$platform) ||
+    !nzchar(entry$platform) ||
+    identical(entry$platform, target$platform)
+
+  identical(entry$username, target$username) && platform_matches
+}
+
+vouch_git_blame_username <- function(filepath, line_number) {
+  if (!nzchar(Sys.which("git")) || is.na(line_number)) {
+    return("")
+  }
+
+  output <- tryCatch(
+    suppressWarnings(system2(
+      "git",
+      c(
+        "blame",
+        "--line-porcelain",
+        paste0("-L", line_number, ",", line_number),
+        "--",
+        filepath
+      ),
+      stdout = TRUE,
+      stderr = TRUE
+    )),
+    error = function(...) character()
+  )
+
+  status <- attr(output, "status", exact = TRUE)
+  if (!is.null(status) && !identical(status, 0L)) {
+    return("")
+  }
+
+  author_line <- grep("^author\\s+", output, value = TRUE)[1]
+  if (is.na(author_line)) {
+    return("")
+  }
+
+  sub("^author\\s+", "", author_line)
+}
 
 vouch_update_file <- function(
   username,
@@ -257,18 +346,6 @@ vouch_rebuild_lines <- function(
       method = "radix"
     )]
   )
-}
-
-vouch_entry_matches_target <- function(entry, target) {
-  if (is.null(entry)) {
-    return(FALSE)
-  }
-
-  platform_matches <- !nzchar(target$platform) ||
-    !nzchar(entry$platform) ||
-    identical(entry$platform, target$platform)
-
-  identical(entry$username, target$username) && platform_matches
 }
 
 vouch_format_entry <- function(
