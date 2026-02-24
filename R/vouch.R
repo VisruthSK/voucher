@@ -25,6 +25,7 @@
 #'
 #' @section Attribution:
 #' Documentation for this function is copied nearly verbatim from [`vouch`](https://github.com/mitchellh/vouch) and is owned by Mitchell Hashimoto.
+#' @export
 add <- function(
   username,
   write = FALSE,
@@ -71,6 +72,7 @@ add <- function(
 #'
 #' @section Attribution:
 #' Documentation for this function is copied nearly verbatim from [`vouch`](https://github.com/mitchellh/vouch) and is owned by Mitchell Hashimoto.
+#' @export
 denounce <- function(
   username,
   write = FALSE,
@@ -107,6 +109,7 @@ denounce <- function(
 #'
 #' @section Attribution:
 #' Documentation for this function is copied nearly verbatim from [`vouch`](https://github.com/mitchellh/vouch) and is owned by Mitchell Hashimoto.
+#' @export
 check <- function(
   username,
   default_platform = "",
