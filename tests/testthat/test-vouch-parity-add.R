@@ -40,45 +40,30 @@ test_that("add parity matches explicit vouched-file usage", {
   )
 
   for (case in cases) {
-    temp_proj <- tempfile("voucher-vouch-add-")
-    dir.create(temp_proj)
-    file_r <- file.path(temp_proj, "voucher.td")
-    file_v <- file.path(temp_proj, "vouch.td")
-    writeLines(case$initial, file_r)
-    writeLines(case$initial, file_v)
+    files <- vouch_new_pair_files(case$initial, prefix = "voucher-vouch-add-")
 
     voucher_result <- vouch_run_add(
       username = case$username,
       write = case$write,
       default_platform = case$default_platform,
-      vouched_file = file_r
+      vouched_file = files$voucher_file
     )
     vouch_result <- vouch_cli(vouch_add_args(
       username = case$username,
       write = case$write,
       default_platform = case$default_platform,
-      vouched_file = file_v
+      vouched_file = files$vouch_file
     ))
 
-    expect_false(voucher_result$visible, info = case$name)
-    expect_equal(vouch_result$status, 0L, info = case$name)
-
-    if (isTRUE(case$write)) {
-      expect_equal(vouch_td(file_r), vouch_td(file_v), info = case$name)
-      expect_equal(voucher_result$value, vouch_td(file_r), info = case$name)
-    } else {
-      expect_equal(voucher_result$value, vouch_result$output, info = case$name)
-      expect_equal(
-        readLines(file_r, warn = FALSE),
-        case$initial,
-        info = case$name
-      )
-      expect_equal(
-        readLines(file_v, warn = FALSE),
-        case$initial,
-        info = case$name
-      )
-    }
+    vouch_expect_update_parity(
+      voucher_result = voucher_result,
+      vouch_result = vouch_result,
+      write = case$write,
+      voucher_file = files$voucher_file,
+      vouch_file = files$vouch_file,
+      initial_lines = case$initial,
+      info = case$name
+    )
   }
 })
 
@@ -101,33 +86,27 @@ test_that("add parity matches default-path resolution", {
   )
 
   for (case in cases) {
-    dir_r <- tempfile("voucher-add-default-r-")
-    dir_v <- tempfile("voucher-add-default-v-")
-    vouch_new_project(
-      dir_r,
+    projects <- vouch_new_pair_projects(
       root_lines = case$root_lines,
-      github_lines = case$github_lines
-    )
-    vouch_new_project(
-      dir_v,
-      root_lines = case$root_lines,
-      github_lines = case$github_lines
+      github_lines = case$github_lines,
+      prefix = "voucher-add-default-"
     )
 
     voucher_result <- vouch_with_dir(
-      dir_r,
+      projects$voucher_dir,
       vouch_run_add("charlie", write = TRUE)
     )
     vouch_result <- vouch_with_dir(
-      dir_v,
+      projects$vouch_dir,
       vouch_cli(vouch_add_args("charlie", write = TRUE))
     )
 
-    expect_false(voucher_result$visible, info = case$name)
-    expect_equal(vouch_result$status, 0L, info = case$name)
-    expect_equal(
-      vouch_td(file.path(dir_r, case$target)),
-      vouch_td(file.path(dir_v, case$target)),
+    vouch_expect_update_parity(
+      voucher_result = voucher_result,
+      vouch_result = vouch_result,
+      write = TRUE,
+      voucher_file = file.path(projects$voucher_dir, case$target),
+      vouch_file = file.path(projects$vouch_dir, case$target),
       info = case$name
     )
   }
@@ -136,67 +115,46 @@ test_that("add parity matches default-path resolution", {
 test_that("add parity matches explicit vouched-file override", {
   vouch_parity_skip()
 
-  dir_r <- tempfile("voucher-add-override-r-")
-  dir_v <- tempfile("voucher-add-override-v-")
-  vouch_new_project(
-    dir_r,
+  projects <- vouch_new_pair_projects(
     root_lines = c("# root", "alice"),
-    github_lines = c("# gh", "bob")
-  )
-  vouch_new_project(
-    dir_v,
-    root_lines = c("# root", "alice"),
-    github_lines = c("# gh", "bob")
+    github_lines = c("# gh", "bob"),
+    prefix = "voucher-add-override-"
   )
 
-  override_r <- file.path(dir_r, "override.td")
-  override_v <- file.path(dir_v, "override.td")
+  override_r <- file.path(projects$voucher_dir, "override.td")
+  override_v <- file.path(projects$vouch_dir, "override.td")
   writeLines(c("# override", "zoe"), override_r)
   writeLines(c("# override", "zoe"), override_v)
 
   voucher_result <- vouch_with_dir(
-    dir_r,
+    projects$voucher_dir,
     vouch_run_add("bob", write = TRUE, vouched_file = override_r)
   )
   vouch_result <- vouch_with_dir(
-    dir_v,
+    projects$vouch_dir,
     vouch_cli(vouch_add_args("bob", write = TRUE, vouched_file = override_v))
   )
 
-  expect_false(voucher_result$visible)
-  expect_equal(vouch_result$status, 0L)
-  expect_equal(vouch_td(override_r), vouch_td(override_v))
-  expect_equal(
-    readLines(file.path(dir_r, "VOUCHED.td"), warn = FALSE),
-    c("# root", "alice")
+  vouch_expect_update_parity(
+    voucher_result = voucher_result,
+    vouch_result = vouch_result,
+    write = TRUE,
+    voucher_file = override_r,
+    vouch_file = override_v
   )
-  expect_equal(
-    readLines(file.path(dir_r, ".github", "VOUCHED.td"), warn = FALSE),
-    c("# gh", "bob")
+  vouch_expect_project_files(
+    projects$voucher_dir,
+    root_lines = c("# root", "alice"),
+    github_lines = c("# gh", "bob")
   )
 })
 
 test_that("add missing-file errors match vouch CLI", {
   vouch_parity_skip()
 
-  dir_r <- tempfile("voucher-add-missing-r-")
-  dir_v <- tempfile("voucher-add-missing-v-")
-  dir.create(dir_r)
-  dir.create(dir_v)
-
-  voucher_error <- vouch_with_dir(
-    dir_r,
-    tryCatch(
-      {
-        vouch_run_add("nobody")
-        ""
-      },
-      error = function(e) conditionMessage(e)
-    )
+  vouch_expect_missing_file_parity(
+    run_voucher = function() vouch_run_add("nobody"),
+    run_vouch = function() vouch_cli(vouch_add_args("nobody")),
+    prefix = "voucher-add-missing-"
   )
-  vouch_error <- vouch_with_dir(dir_v, vouch_cli(vouch_add_args("nobody")))
-
-  expect_match(voucher_error, "no VOUCHED file found")
-  expect_true(vouch_error$status != 0L)
-  expect_match(vouch_error$output, "no VOUCHED file found")
 })
