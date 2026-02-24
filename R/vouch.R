@@ -159,7 +159,6 @@ vouch_update_file <- function(
   }
   file <- vouch_resolve_existing_file(vouched_file)
   target <- vouch_split_handle(username, default_platform = default_platform)
-  details <- trimws(details)
   handle <- if (nzchar(target$raw_platform)) {
     paste0(target$raw_platform, ":", target$username)
   } else {
@@ -170,26 +169,42 @@ vouch_update_file <- function(
     handle,
     if (nzchar(details)) paste0(" ", details) else ""
   )
-  lines <- readLines(file, warn = FALSE) |>
-    (\(existing) {
-      keep <- vapply(
-        existing,
-        function(line) {
-          entry <- vouch_parse_line(line, default_platform = default_platform)
-          if (is.null(entry)) {
-            return(TRUE)
-          }
+  existing <- readLines(file, warn = FALSE)
+  parsed <- lapply(
+    existing,
+    vouch_parse_line,
+    default_platform = default_platform
+  )
+  is_contributor <- !vapply(parsed, is.null, logical(1))
 
-          platform_matches <- !nzchar(target$platform) ||
-            !nzchar(entry$platform) ||
-            identical(entry$platform, target$platform)
+  contributor_lines <- existing[is_contributor]
+  contributor_entries <- parsed[is_contributor]
+  keep <- vapply(
+    contributor_entries,
+    function(entry) {
+      platform_matches <- !nzchar(target$platform) ||
+        !nzchar(entry$platform) ||
+        identical(entry$platform, target$platform)
 
-          !(identical(entry$username, target$username) && platform_matches)
-        },
-        logical(1)
-      )
-      c(existing[keep], new_entry)
-    })()
+      !(identical(entry$username, target$username) && platform_matches)
+    },
+    logical(1)
+  )
+
+  updated_contributor_lines <- c(contributor_lines[keep], new_entry)
+  updated_contributor_entries <- c(
+    contributor_entries[keep],
+    list(vouch_parse_line(new_entry, default_platform = default_platform))
+  )
+  contributor_order <- order(
+    vapply(updated_contributor_entries, `[[`, character(1), "username"),
+    method = "radix"
+  )
+
+  lines <- c(
+    existing[!is_contributor],
+    updated_contributor_lines[contributor_order]
+  )
   text <- paste0(paste(lines, collapse = "\n"), "\n")
 
   if (isTRUE(write)) {

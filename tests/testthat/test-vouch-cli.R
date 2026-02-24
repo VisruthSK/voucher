@@ -46,7 +46,7 @@ test_that("add write updates file and emits cli success", {
   )
 })
 
-test_that("denounce preview trims reason and does not write", {
+test_that("denounce preview includes reason and does not write", {
   temp_proj <- tempfile("voucher-test-")
   dir.create(temp_proj)
   old_wd <- setwd(temp_proj)
@@ -57,7 +57,7 @@ test_that("denounce preview trims reason and does not write", {
   writeLines(initial, ".github/VOUCHED.td")
 
   expect_snapshot(
-    result <- withVisible(voucher:::denounce("bob", reason = "  bad actor  ")),
+    result <- withVisible(voucher:::denounce("bob", reason = "bad actor")),
     cran = FALSE
   )
 

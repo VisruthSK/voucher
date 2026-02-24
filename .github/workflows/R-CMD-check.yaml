@@ -27,6 +27,7 @@ jobs:
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      NOT_CRAN: true
       R_KEEP_PKG_SOURCE: yes
 
     steps:
@@ -39,6 +40,9 @@ jobs:
           r-version: ${{ matrix.config.r }}
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
+
+      - if: matrix.config.os == 'ubuntu-latest'
+        uses: mitchellh/vouch/action/setup-vouch@v1
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
