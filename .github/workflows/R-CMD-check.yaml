@@ -41,8 +41,7 @@ jobs:
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
 
-      - if: matrix.config.os == 'ubuntu-latest'
-        uses: mitchellh/vouch/action/setup-vouch@v1
+      - uses: mitchellh/vouch/action/setup-vouch@v1
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
