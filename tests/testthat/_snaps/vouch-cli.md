@@ -1,50 +1,69 @@
-# add writes in-place when write is TRUE
+# add preview prints updated trustdown and does not write
 
     Code
-      result <- withVisible(voucher:::add("github:carol", write = TRUE))
+      result <- withVisible(voucher:::add("bob"))
+    Output
+      # header
+      alice
+      bob
+
+# add write updates file and emits cli success
+
+    Code
+      result <- withVisible(voucher:::add("carol", write = TRUE, default_platform = "github"))
     Message
-      v Added (github:carol) to vouched contributors
+      v Added (carol) to vouched contributors
 
-# check returns vouched denounced and unknown
+# denounce preview trims reason and does not write
 
     Code
-      status_vouched <- voucher:::check("alice")
+      result <- withVisible(voucher:::denounce("bob", reason = "  bad actor  "))
+    Output
+      # header
+      alice
+      -bob bad actor
+
+# denounce write updates file and emits cli success
+
+    Code
+      result <- withVisible(voucher:::denounce("github:bob", write = TRUE))
+    Message
+      v Denounced (github:bob)
+
+# check reports statuses via cli and returns invisibly
+
+    Code
+      vouched <- withVisible(voucher:::check("alice"))
     Message
       i alice is vouched
-
----
-
     Code
-      status_denounced <- voucher:::check("github:bob")
+      denounced <- withVisible(voucher:::check("github:bob"))
     Message
       i github:bob is denounced
-
----
-
     Code
-      status_unknown <- voucher:::check("charlie")
+      unknown <- withVisible(voucher:::check("charlie"))
     Message
       i charlie is unknown
 
-# denounce previews and writes denounced entry
+# check default_platform changes matching for unqualified handles
 
     Code
-      result_write <- withVisible(voucher:::denounce("bob", reason = "bad actor",
-        write = TRUE))
+      github <- withVisible(voucher:::check("bob", default_platform = "github"))
     Message
-      v Denounced (bob)
+      i bob is denounced
+    Code
+      gitlab <- withVisible(voucher:::check("bob", default_platform = "gitlab"))
+    Message
+      i bob is vouched
+    Code
+      none <- withVisible(voucher:::check("bob"))
+    Message
+      i bob is denounced
 
-# helpers cover no file and empty text edge cases
+# check errors when file is missing and handles empty file
 
     Code
-      status <- voucher:::check("nobody")
+      result <- withVisible(voucher:::check("nobody"))
     Message
       i nobody is unknown
-
-# helpers cover vector and parsing edge branches
-
-    Code
-      status <- voucher:::check("alice")
-    Message
-      i alice is vouched
 

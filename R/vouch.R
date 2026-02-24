@@ -37,8 +37,7 @@ add <- function(
     write = write,
     default_platform = default_platform,
     vouched_file = vouched_file,
-    type = "vouch",
-    write_message = "Added ({username}) to vouched contributors"
+    type = "vouch"
   )
 }
 
@@ -87,8 +86,7 @@ denounce <- function(
     default_platform = default_platform,
     vouched_file = vouched_file,
     type = "denounce",
-    details = reason,
-    write_message = "Denounced ({username})"
+    details = reason
   )
 }
 
@@ -143,7 +141,7 @@ check <- function(
 
   cli::cli_alert_info("{username} is {status}")
 
-  status
+  invisible(status)
 }
 
 # Helpers ---------------------------------------------------------------------
@@ -154,40 +152,47 @@ vouch_update_file <- function(
   default_platform = "",
   vouched_file = "",
   type = c("vouch", "denounce"),
-  details = "",
-  write_message
+  details = ""
 ) {
   type <- match.arg(type)
+  write_message <- if (identical(type, "denounce")) {
+    "Denounced ({username})"
+  } else {
+    "Added ({username}) to vouched contributors"
+  }
   file <- vouch_resolve_existing_file(vouched_file)
   target <- vouch_split_handle(username, default_platform = default_platform)
-  lines <- readLines(file, warn = FALSE)
-  keep <- vapply(
-    lines,
-    function(line) {
-      entry <- vouch_parse_line(line, default_platform = default_platform)
-      if (is.null(entry)) {
-        return(TRUE)
-      }
-
-      platform_matches <- !nzchar(target$platform) ||
-        !nzchar(entry$platform) ||
-        identical(entry$platform, target$platform)
-
-      !(identical(entry$username, target$username) && platform_matches)
-    },
-    logical(1)
-  )
   details <- trimws(details)
   handle <- if (nzchar(target$raw_platform)) {
     paste0(target$raw_platform, ":", target$username)
   } else {
     target$username
   }
-  suffix <- if (nzchar(details)) paste0(" ", details) else ""
-  lines <- c(
-    lines[keep],
-    paste0(if (identical(type, "denounce")) "-" else "", handle, suffix)
+  new_entry <- paste0(
+    if (identical(type, "denounce")) "-" else "",
+    handle,
+    if (nzchar(details)) paste0(" ", details) else ""
   )
+  lines <- readLines(file, warn = FALSE) |>
+    (\(existing) {
+      keep <- vapply(
+        existing,
+        function(line) {
+          entry <- vouch_parse_line(line, default_platform = default_platform)
+          if (is.null(entry)) {
+            return(TRUE)
+          }
+
+          platform_matches <- !nzchar(target$platform) ||
+            !nzchar(entry$platform) ||
+            identical(entry$platform, target$platform)
+
+          !(identical(entry$username, target$username) && platform_matches)
+        },
+        logical(1)
+      )
+      c(existing[keep], new_entry)
+    })()
   text <- paste0(paste(lines, collapse = "\n"), "\n")
 
   if (isTRUE(write)) {
