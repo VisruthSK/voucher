@@ -40,6 +40,8 @@ jobs:
           print(cov)
           covr::to_cobertura(cov)
         shell: Rscript {0}
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - uses: codecov/codecov-action@v5
         with:
