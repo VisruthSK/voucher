@@ -25,8 +25,7 @@ This adds the user to the vouched list, removing any existing entry
 }
 \section{Attribution}{
 
-Documentation for this function is copied nearly verbatim from the upstream
-vouch Nushell command help and is owned by Mitchell Hashimoto.
+Documentation for this function is copied nearly verbatim from \href{https://github.com/mitchellh/vouch}{\code{vouch}} and is owned by Mitchell Hashimoto.
 }
 
 \examples{

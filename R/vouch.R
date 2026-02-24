@@ -24,8 +24,7 @@
 #' }
 #'
 #' @section Attribution:
-#' Documentation for this function is copied nearly verbatim from the upstream
-#' vouch Nushell command help and is owned by Mitchell Hashimoto.
+#' Documentation for this function is copied nearly verbatim from [`vouch`](https://github.com/mitchellh/vouch) and is owned by Mitchell Hashimoto.
 add <- function(
   username,
   write = FALSE,
@@ -71,8 +70,7 @@ add <- function(
 #' }
 #'
 #' @section Attribution:
-#' Documentation for this function is copied nearly verbatim from the upstream
-#' vouch Nushell command help and is owned by Mitchell Hashimoto.
+#' Documentation for this function is copied nearly verbatim from [`vouch`](https://github.com/mitchellh/vouch) and is owned by Mitchell Hashimoto.
 denounce <- function(
   username,
   write = FALSE,
@@ -108,8 +106,7 @@ denounce <- function(
 #' }
 #'
 #' @section Attribution:
-#' Documentation for this function is copied nearly verbatim from the upstream
-#' vouch Nushell command help and is owned by Mitchell Hashimoto.
+#' Documentation for this function is copied nearly verbatim from [`vouch`](https://github.com/mitchellh/vouch) and is owned by Mitchell Hashimoto.
 check <- function(
   username,
   default_platform = "",
