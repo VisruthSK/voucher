@@ -19,23 +19,17 @@ vouch_gha <- function(
     )
   }
   actions <- match.arg(action, several.ok = TRUE)
-  workflow_paths <- character(length(actions))
+  template_paths <- vapply(actions, find_vouch_workflow_template, character(1))
+  workflow_paths <- fs::path(".github", "workflows", paste0(actions, ".yaml"))
 
-  for (i in seq_along(actions)) {
-    workflow_paths[[i]] <- fs::path(
-      ".github",
-      "workflows",
-      paste0(actions[[i]], ".yaml")
-    )
-
-    find_vouch_workflow_template(actions[[i]]) |>
-      readLines(warn = FALSE) |>
-      write_to_path(workflow_paths[[i]])
-
-    cli::cli_alert_info(
-      "Wrote GitHub Actions workflow to {.path {workflow_paths[[i]]}}."
-    )
-  }
+  Map(
+    function(src, dst) {
+      write_to_path(readLines(src, warn = FALSE), dst)
+      cli::cli_alert_info("Wrote GitHub Actions workflow to {.path {dst}}.")
+    },
+    template_paths,
+    workflow_paths
+  )
 
   invisible(workflow_paths)
 }
