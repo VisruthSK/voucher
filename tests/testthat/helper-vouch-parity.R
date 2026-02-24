@@ -15,7 +15,7 @@ vouch_cli <- function(args) {
   output <- suppressWarnings(
     system2(
       command = "vouch",
-      args = args,
+      args = shQuote(args),
       stdout = TRUE,
       stderr = TRUE,
       env = c("NO_COLOR=1")
@@ -29,20 +29,12 @@ vouch_cli <- function(args) {
 
   list(
     status = status,
-    output = if (length(output)) {
-      paste0(paste(output, collapse = "\n"), "\n")
-    } else {
-      ""
-    }
+    output = paste0(paste(output, collapse = "\n"), "\n")
   )
 }
 
 vouch_td <- function(path) {
-  lines <- readLines(path, warn = FALSE)
-  if (!length(lines)) {
-    return("")
-  }
-  paste0(paste(lines, collapse = "\n"), "\n")
+  paste0(paste(readLines(path, warn = FALSE), collapse = "\n"), "\n")
 }
 
 vouch_status_from_output <- function(output) {

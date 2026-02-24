@@ -47,6 +47,27 @@ test_that("add write updates file and emits cli success", {
   )
 })
 
+test_that("add write preserves non-contributor lines when no contributors exist", {
+  temp_proj <- tempfile("voucher-test-")
+  dir.create(temp_proj)
+  old_wd <- setwd(temp_proj)
+  on.exit(setwd(old_wd), add = TRUE)
+
+  writeLines(c("# header", ""), "VOUCHED.td")
+
+  result <- suppressMessages(withVisible(voucher:::add(
+    "newuser",
+    write = TRUE
+  )))
+
+  expect_false(result$visible)
+  expect_equal(result$value, "# header\n\nnewuser\n")
+  expect_equal(
+    readLines("VOUCHED.td", warn = FALSE),
+    c("# header", "", "newuser")
+  )
+})
+
 test_that("denounce preview includes reason and does not write", {
   temp_proj <- tempfile("voucher-test-")
   dir.create(temp_proj)

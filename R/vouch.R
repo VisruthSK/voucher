@@ -205,9 +205,10 @@ vouch_rebuild_lines <- function(
     parsed[survivor_idx],
     list(vouch_parse_line(new_entry, default_platform = default_platform))
   )
+  non_contributor_idx <- setdiff(seq_along(existing), contributor_idx)
 
   c(
-    existing[-contributor_idx],
+    existing[non_contributor_idx],
     vouch_sort_contributor_lines(updated_lines, updated_entries)
   )
 }

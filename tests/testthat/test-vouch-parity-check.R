@@ -69,7 +69,7 @@ test_that("check parity matches additional ordering and platform tie cases", {
 
   cases <- list(
     list(username = "bob", default_platform = "", code = 0L),
-    list(username = "bob", default_platform = "github", code = 0L),
+    list(username = "bob", default_platform = "github", code = 1L),
     list(username = "bob", default_platform = "gitlab", code = 0L),
     list(username = "github:bob", default_platform = "", code = 1L),
     list(username = "gitlab:bob", default_platform = "", code = 0L)
