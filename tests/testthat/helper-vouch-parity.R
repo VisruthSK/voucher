@@ -12,22 +12,12 @@ vouch_parity_skip <- function() {
 }
 
 vouch_cli <- function(args) {
-  vouch_bin <- Sys.which("vouch")
-  if (
-    nzchar(vouch_bin) && identical(basename(dirname(vouch_bin)), ".vouch-bin")
-  ) {
-    spaced <- grepl("[[:space:]]", args)
-    args[spaced] <- paste0(
-      "\"",
-      gsub("\"", "\\\\\"", args[spaced]),
-      "\""
-    )
-  }
+  cli_call <- vouch_cli_call(args)
 
   output <- suppressWarnings(
     system2(
-      command = "vouch",
-      args = shQuote(args),
+      command = cli_call$command,
+      args = shQuote(cli_call$args),
       stdout = TRUE,
       stderr = TRUE,
       env = c("NO_COLOR=1")
@@ -43,6 +33,40 @@ vouch_cli <- function(args) {
     status = status,
     output = paste0(paste(output, collapse = "\n"), "\n")
   )
+}
+
+vouch_cli_call <- function(args) {
+  vouch_bin <- Sys.which("vouch")
+  nu_bin <- Sys.which("nu")
+
+  if (identical(basename(dirname(vouch_bin)), ".vouch-bin") && nzchar(nu_bin)) {
+    vouch_mod <- file.path(dirname(dirname(vouch_bin)), "vouch")
+    if (file.exists(vouch_mod)) {
+      return(list(
+        command = nu_bin,
+        args = c("--no-config-file", "-c", vouch_nu_command(vouch_mod, args))
+      ))
+    }
+  }
+
+  list(command = "vouch", args = args)
+}
+
+vouch_nu_command <- function(vouch_mod, args) {
+  paste(
+    c("use", vouch_nu_quote(vouch_mod), "*;", vapply(args, vouch_nu_quote, character(1))),
+    collapse = " "
+  )
+}
+
+vouch_nu_quote <- function(arg) {
+  if (!grepl("[[:space:]\"\\\\]", arg)) {
+    return(arg)
+  }
+
+  escaped <- gsub("\\\\", "\\\\\\\\", arg)
+  escaped <- gsub("\"", "\\\\\"", escaped)
+  paste0("\"", escaped, "\"")
 }
 
 vouch_td <- function(path) {
