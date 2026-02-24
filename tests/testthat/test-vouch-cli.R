@@ -286,7 +286,7 @@ test_that("check includes mocked git blame author in status message", {
 
     expect_message(
       result <- withVisible(voucher:::check("alice", blame = TRUE)),
-      "alice is vouched \\(git blame: Mock Author\\)"
+      "alice is vouched \\(Mock Author\\)"
     )
     expect_invisible_value(result, "vouched")
   })

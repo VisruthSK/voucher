@@ -178,7 +178,7 @@ check <- function(
       }
 
       status_message <- if (nzchar(blame_username)) {
-        "{user} is {status} (git blame: {blame_username})"
+        "{user} is {status} ({blame_username})"
       } else {
         "{user} is {status}"
       }

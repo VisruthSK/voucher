@@ -65,7 +65,7 @@
     Code
       result <- withVisible(voucher:::check("alice", blame = TRUE))
     Message
-      i alice is vouched (git blame: VoucherBlameTest)
+      i alice is vouched (VoucherBlameTest)
 
 # check errors when file is missing and handles empty file
 
