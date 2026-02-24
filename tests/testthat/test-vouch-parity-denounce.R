@@ -51,13 +51,15 @@ test_that("denounce parity matches explicit vouched-file usage", {
       default_platform = case$default_platform,
       vouched_file = file_r
     )
-    vouch_result <- vouch_cli(vouch_denounce_args(
-      username = case$username,
-      write = case$write,
-      reason = case$reason,
-      default_platform = case$default_platform,
-      vouched_file = file_v
-    ))
+    vouch_result <- vouch_cli(
+      vouch_denounce_args(
+        username = case$username,
+        write = case$write,
+        reason = case$reason,
+        default_platform = case$default_platform,
+        vouched_file = file_v
+      )
+    )
 
     expect_false(voucher_result$visible, info = case$name)
     expect_equal(vouch_result$status, 0L, info = case$name)
