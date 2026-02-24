@@ -163,7 +163,7 @@ test_that("denounce write matches vouch CLI", {
   writeLines(initial, file_r)
   writeLines(initial, file_v)
 
-  reason <- "  suspicious behavior  "
+  reason <- "suspicious behavior"
   voucher_result <- suppressMessages(withVisible(voucher:::denounce(
     "bob",
     write = TRUE,
@@ -182,6 +182,7 @@ test_that("denounce write matches vouch CLI", {
 
   expect_false(voucher_result$visible)
   expect_equal(vouch_result$status, 0L)
+  expect_true(grepl("Denounced", vouch_result$output, fixed = TRUE))
   expect_equal(vouch_parity_read_td(file_r), vouch_parity_read_td(file_v))
   expect_equal(voucher_result$value, vouch_parity_read_td(file_r))
 })
