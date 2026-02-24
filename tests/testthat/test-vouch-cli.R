@@ -259,6 +259,19 @@ test_that("check warns when blame is requested but unavailable", {
   expect_equal(result$value, "vouched")
 })
 
+test_that("check with blame handles unknown users", {
+  vouch_with_temp_project({
+    writeLines("alice", "VOUCHED.td")
+
+    expect_warning(
+      result <- withVisible(voucher:::check("charlie", blame = TRUE)),
+      NA
+    )
+
+    expect_invisible_value(result, "unknown")
+  })
+})
+
 test_that("check includes mocked git blame author in status message", {
   vouch_with_temp_project({
     writeLines("alice", "VOUCHED.td")
