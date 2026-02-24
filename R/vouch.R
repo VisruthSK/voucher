@@ -25,6 +25,7 @@
 #'
 #' @section Attribution:
 #' Documentation for this function is copied nearly verbatim from [`vouch`](https://github.com/mitchellh/vouch) and is owned by Mitchell Hashimoto.
+#' @export
 add <- function(
   username,
   write = FALSE,
@@ -71,6 +72,7 @@ add <- function(
 #'
 #' @section Attribution:
 #' Documentation for this function is copied nearly verbatim from [`vouch`](https://github.com/mitchellh/vouch) and is owned by Mitchell Hashimoto.
+#' @export
 denounce <- function(
   username,
   write = FALSE,
@@ -108,6 +110,7 @@ denounce <- function(
 #'
 #' @section Attribution:
 #' Documentation for this function is copied nearly verbatim from [`vouch`](https://github.com/mitchellh/vouch) and is owned by Mitchell Hashimoto.
+#' @export
 check <- function(
   username,
   default_platform = "",
@@ -115,40 +118,84 @@ check <- function(
   blame = FALSE
 ) {
   file <- vouch_resolve_existing_file(vouched_file)
-  target <- vouch_split_handle(username, default_platform = default_platform)
-  parsed_lines <- readLines(file, warn = FALSE) |>
+  usernames <- as.character(username)
+  entries <- readLines(file, warn = FALSE) |>
     lapply(vouch_parse_line, default_platform = default_platform)
-  matched_line <- parsed_lines |>
-    vapply(vouch_entry_matches_target, logical(1), target = target) |>
-    which() |>
-    (\(idx) if (length(idx) > 0L) idx[[1]] else NA_integer_)()
-  status <- if (is.na(matched_line)) {
-    "unknown"
-  } else if (identical(parsed_lines[[matched_line]]$type, "denounce")) {
-    "denounced"
-  } else {
-    "vouched"
-  }
+  matched_lines <- vapply(
+    usernames,
+    function(user) {
+      target <- vouch_split_handle(user, default_platform = default_platform)
+      idx <- which(vapply(
+        entries,
+        vouch_entry_matches_target,
+        logical(1),
+        target = target
+      ))
 
-  blame_username <- if (isTRUE(blame) && !is.na(matched_line)) {
-    vouch_git_blame_username(file, matched_line)
-  } else {
-    ""
-  }
-  if (isTRUE(blame) && !is.na(matched_line) && !nzchar(blame_username)) {
-    cli::cli_warn(
-      "Unable to resolve git blame author for {.path {file}} line {matched_line}."
+      if (length(idx) > 0L) {
+        idx[[1]]
+      } else {
+        NA_integer_
+      }
+    },
+    integer(1)
+  )
+  statuses <- vapply(
+    matched_lines,
+    \(matched_line) {
+      if (is.na(matched_line)) {
+        "unknown"
+      } else if (identical(entries[[matched_line]]$type, "denounce")) {
+        "denounced"
+      } else {
+        "vouched"
+      }
+    },
+    character(1)
+  )
+  blame_usernames <- if (isTRUE(blame)) {
+    vapply(
+      matched_lines,
+      \(matched_line) {
+        if (is.na(matched_line)) {
+          ""
+        } else {
+          vouch_git_blame_username(file, matched_line)
+        }
+      },
+      character(1)
     )
-  }
-
-  status_message <- if (nzchar(blame_username)) {
-    "{username} is {status} (git blame: {blame_username})"
   } else {
-    "{username} is {status}"
+    rep("", length(matched_lines))
   }
-  cli::cli_alert_info(status_message)
 
-  invisible(status)
+  Map(
+    \(user, status, matched_line, blame_username) {
+      if (isTRUE(blame) && !is.na(matched_line) && !nzchar(blame_username)) {
+        cli::cli_warn(
+          "Unable to resolve git blame author for {.path {file}} line {matched_line}."
+        )
+      }
+
+      status_message <- if (nzchar(blame_username)) {
+        "{user} is {status} (git blame: {blame_username})"
+      } else {
+        "{user} is {status}"
+      }
+      cli::cli_alert_info(status_message)
+    },
+    usernames,
+    statuses,
+    matched_lines,
+    blame_usernames
+  )
+
+  if (length(statuses) == 1L) {
+    return(invisible(statuses[[1]]))
+  }
+
+  names(statuses) <- usernames
+  invisible(statuses)
 }
 
 # Helpers ---------------------------------------------------------------------
@@ -208,20 +255,54 @@ vouch_update_file <- function(
   details = ""
 ) {
   type <- match.arg(type)
+  usernames <- as.character(username)
+  arg_name <- if (identical(type, "denounce")) "reason" else "details"
+  details <- trimws(as.character(details))
+
+  if (!(length(details) %in% c(1L, length(usernames)))) {
+    cli::cli_abort(
+      "{.arg {arg_name}} must have length 1 or match {.arg username} length."
+    )
+  }
+  if (length(details) == 1L) {
+    details <- rep(details, length(usernames))
+  }
+
   write_message <- c(
     vouch = "Added ({username}) to vouched contributors",
     denounce = "Denounced ({username})"
   )[[type]]
+  if (length(usernames) > 1L) {
+    write_message <- c(
+      vouch = "Added ({length(usernames)}) users to vouched contributors",
+      denounce = "Denounced ({length(usernames)}) users"
+    )[[type]]
+  }
   file <- vouch_resolve_existing_file(vouched_file)
-  target <- vouch_split_handle(username, default_platform = default_platform)
-  details <- trimws(details)
-  new_entry <- vouch_format_entry(target, type, details)
-  lines <- readLines(file, warn = FALSE) |>
-    vouch_rebuild_lines(
-      target = target,
-      new_entry = new_entry,
-      default_platform = default_platform
-    )
+  targets <- lapply(
+    usernames,
+    vouch_split_handle,
+    default_platform = default_platform
+  )
+  new_entries <- Map(
+    function(target, detail) {
+      vouch_format_entry(target, type, detail)
+    },
+    targets,
+    details
+  )
+  lines <- Reduce(
+    function(existing, i) {
+      vouch_rebuild_lines(
+        existing,
+        target = targets[[i]],
+        new_entry = new_entries[[i]],
+        default_platform = default_platform
+      )
+    },
+    seq_along(targets),
+    init = readLines(file, warn = FALSE)
+  )
   text <- paste0(paste(lines, collapse = "\n"), "\n")
 
   if (isTRUE(write)) {
@@ -248,13 +329,7 @@ vouch_rebuild_lines <- function(
   contributor_idx <- which(!vapply(parsed, is.null, logical(1)))
   survivor_idx <- contributor_idx[vapply(
     parsed[contributor_idx],
-    function(entry) {
-      platform_matches <- !nzchar(target$platform) ||
-        !nzchar(entry$platform) ||
-        identical(entry$platform, target$platform)
-
-      !(identical(entry$username, target$username) && platform_matches)
-    },
+    \(entry) !vouch_entry_matches_target(entry, target),
     logical(1)
   )]
   updated_lines <- c(existing[survivor_idx], new_entry)
@@ -266,15 +341,11 @@ vouch_rebuild_lines <- function(
 
   c(
     existing[non_contributor_idx],
-    vouch_sort_contributor_lines(updated_lines, updated_entries)
+    updated_lines[order(
+      vapply(updated_entries, `[[`, character(1), "username"),
+      method = "radix"
+    )]
   )
-}
-
-vouch_sort_contributor_lines <- function(lines, entries) {
-  lines[order(
-    vapply(entries, `[[`, character(1), "username"),
-    method = "radix"
-  )]
 }
 
 vouch_format_entry <- function(

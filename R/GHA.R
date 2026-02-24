@@ -1,13 +1,12 @@
 # https://github.com/mitchellh/vouch/tree/main/action
 
+#' @export
 vouch_gha <- function(
   action = c(
     "check-issue",
     "check-pr",
-    "check-user",
     "manage-by-discussion",
     "manage-by-issue",
-    "setup-vouch",
     "sync-codeowners"
   )
 ) {
@@ -19,21 +18,27 @@ vouch_gha <- function(
       )
     )
   }
-  action <- match.arg(action, several.ok = TRUE)
+  actions <- match.arg(action, several.ok = TRUE)
+  template_paths <- vapply(actions, find_vouch_workflow_template, character(1))
+  workflow_paths <- fs::path(".github", "workflows", paste0(actions, ".yaml"))
 
-  workflow_path <- fs::path(".github", "workflows", paste0(action, ".yaml"))
-  find_vouch_workflow_template(action) |>
-    readLines(warn = FALSE) |>
-    write_to_path(workflow_path)
-
-  cli::cli_alert_info(
-    "Wrote GitHub Actions workflow to {.path {workflow_path}}."
+  Map(
+    function(src, dst) {
+      write_to_path(readLines(src, warn = FALSE), dst)
+      cli::cli_alert_info("Wrote GitHub Actions workflow to {.path {dst}}.")
+    },
+    template_paths,
+    workflow_paths
   )
 
-  invisible(workflow_path)
+  invisible(workflow_paths)
 }
 
 find_vouch_workflow_template <- function(action, package = "voucher") {
+  if (length(action) != 1L) {
+    cli::cli_abort("{.arg action} must contain exactly one action name.")
+  }
+
   installed_path <- system.file(
     "vouch_example_workflows",
     paste0(action, ".yaml"),

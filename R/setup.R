@@ -1,3 +1,4 @@
+#' @export
 use_vouch <- function() {
   if (is_vouch_project()) {
     return(invisible(NULL))
