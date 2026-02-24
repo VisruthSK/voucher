@@ -1,4 +1,9 @@
 # jarl-ignore-file internal_function: tests intentionally exercise voucher internal functions.
+expect_invisible_value <- function(result, value) {
+  expect_false(result$visible)
+  expect_equal(result$value, value)
+}
+
 test_that("add preview prints updated trustdown and does not write", {
   vouch_with_temp_project({
     dir.create(".github")
@@ -10,8 +15,8 @@ test_that("add preview prints updated trustdown and does not write", {
       cran = FALSE
     )
 
-    vouch_expect_invisible_value(result, "# header\nalice\nbob\n")
-    expect_equal(vouch_read_lines(".github/VOUCHED.td"), initial)
+    expect_invisible_value(result, "# header\nalice\nbob\n")
+    expect_equal(readLines(".github/VOUCHED.td", warn = FALSE), initial)
   })
 })
 
@@ -31,9 +36,9 @@ test_that("add write updates file and emits cli success", {
       cran = FALSE
     )
 
-    vouch_expect_invisible_value(result, "# header\nalice\ncarol\n")
+    expect_invisible_value(result, "# header\nalice\ncarol\n")
     expect_equal(
-      vouch_read_lines("VOUCHED.td"),
+      readLines("VOUCHED.td", warn = FALSE),
       c("# header", "alice", "carol")
     )
   })
@@ -48,8 +53,11 @@ test_that("add write preserves non-contributor lines when no contributors exist"
       write = TRUE
     )))
 
-    vouch_expect_invisible_value(result, "# header\n\nnewuser\n")
-    expect_equal(vouch_read_lines("VOUCHED.td"), c("# header", "", "newuser"))
+    expect_invisible_value(result, "# header\n\nnewuser\n")
+    expect_equal(
+      readLines("VOUCHED.td", warn = FALSE),
+      c("# header", "", "newuser")
+    )
   })
 })
 
@@ -64,8 +72,8 @@ test_that("denounce preview includes reason and does not write", {
       cran = FALSE
     )
 
-    vouch_expect_invisible_value(result, "# header\nalice\n-bob bad actor\n")
-    expect_equal(vouch_read_lines(".github/VOUCHED.td"), initial)
+    expect_invisible_value(result, "# header\nalice\n-bob bad actor\n")
+    expect_equal(readLines(".github/VOUCHED.td", warn = FALSE), initial)
   })
 })
 
@@ -78,8 +86,11 @@ test_that("denounce write updates file and emits cli success", {
       cran = FALSE
     )
 
-    vouch_expect_invisible_value(result, "alice\n-github:bob\n")
-    expect_equal(vouch_read_lines("VOUCHED.td"), c("alice", "-github:bob"))
+    expect_invisible_value(result, "alice\n-github:bob\n")
+    expect_equal(
+      readLines("VOUCHED.td", warn = FALSE),
+      c("alice", "-github:bob")
+    )
   })
 })
 
@@ -96,9 +107,9 @@ test_that("check reports statuses via cli and returns invisibly", {
       cran = FALSE
     )
 
-    vouch_expect_invisible_value(vouched, "vouched")
-    vouch_expect_invisible_value(denounced, "denounced")
-    vouch_expect_invisible_value(unknown, "unknown")
+    expect_invisible_value(vouched, "vouched")
+    expect_invisible_value(denounced, "denounced")
+    expect_invisible_value(unknown, "unknown")
   })
 })
 
@@ -136,7 +147,7 @@ test_that("check errors when file is missing and handles empty file", {
       result <- withVisible(voucher:::check("nobody")),
       cran = FALSE
     )
-    vouch_expect_invisible_value(result, "unknown")
+    expect_invisible_value(result, "unknown")
   })
 })
 

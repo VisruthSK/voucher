@@ -19,8 +19,8 @@ test_that("vouch_gha writes every workflow from inst templates", {
 
       expect_true(file.exists(workflow_path), info = action)
       expect_equal(
-        vouch_read_lines(workflow_path),
-        vouch_read_lines(template_path),
+        readLines(workflow_path, warn = FALSE),
+        readLines(template_path, warn = FALSE),
         info = action
       )
     }

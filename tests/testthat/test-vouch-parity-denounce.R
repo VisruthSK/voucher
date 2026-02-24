@@ -42,7 +42,8 @@ test_that("denounce parity matches explicit vouched-file usage", {
       prefix = "voucher-vouch-denounce-"
     )
 
-    voucher_result <- vouch_run_denounce(
+    voucher_result <- vouch_run(
+      command = "denounce",
       username = case$username,
       write = case$write,
       reason = case$reason,
@@ -50,7 +51,8 @@ test_that("denounce parity matches explicit vouched-file usage", {
       vouched_file = files$voucher_file
     )
     vouch_result <- vouch_cli(
-      vouch_denounce_args(
+      vouch_args(
+        command = "denounce",
         username = case$username,
         write = case$write,
         reason = case$reason,
@@ -98,11 +100,11 @@ test_that("denounce parity matches default-path resolution", {
 
     voucher_result <- vouch_with_dir(
       projects$voucher_dir,
-      vouch_run_denounce("bob", write = TRUE, reason = "spam")
+      vouch_run("denounce", username = "bob", write = TRUE, reason = "spam")
     )
     vouch_result <- vouch_with_dir(
       projects$vouch_dir,
-      vouch_cli(vouch_denounce_args("bob", write = TRUE, reason = "spam"))
+      vouch_cli(vouch_args("denounce", "bob", write = TRUE, reason = "spam"))
     )
 
     vouch_expect_update_parity(
@@ -132,8 +134,9 @@ test_that("denounce parity matches explicit vouched-file override", {
 
   voucher_result <- vouch_with_dir(
     projects$voucher_dir,
-    vouch_run_denounce(
-      "bob",
+    vouch_run(
+      "denounce",
+      username = "bob",
       write = TRUE,
       reason = "spam",
       vouched_file = override_r
@@ -141,7 +144,8 @@ test_that("denounce parity matches explicit vouched-file override", {
   )
   vouch_result <- vouch_with_dir(
     projects$vouch_dir,
-    vouch_cli(vouch_denounce_args(
+    vouch_cli(vouch_args(
+      "denounce",
       "bob",
       write = TRUE,
       reason = "spam",
@@ -156,19 +160,43 @@ test_that("denounce parity matches explicit vouched-file override", {
     voucher_file = override_r,
     vouch_file = override_v
   )
-  vouch_expect_project_files(
-    projects$voucher_dir,
-    root_lines = c("# root", "alice"),
-    github_lines = c("# gh", "bob")
+  expect_equal(
+    readLines(file.path(projects$voucher_dir, "VOUCHED.td"), warn = FALSE),
+    c("# root", "alice")
+  )
+  expect_equal(
+    readLines(
+      file.path(projects$voucher_dir, ".github", "VOUCHED.td"),
+      warn = FALSE
+    ),
+    c("# gh", "bob")
   )
 })
 
 test_that("denounce missing-file errors match vouch CLI", {
   vouch_parity_skip()
 
-  vouch_expect_missing_file_parity(
-    run_voucher = function() vouch_run_denounce("nobody"),
-    run_vouch = function() vouch_cli(vouch_denounce_args("nobody")),
-    prefix = "voucher-denounce-missing-"
+  voucher_dir <- tempfile("voucher-denounce-missing-r-")
+  vouch_dir <- tempfile("voucher-denounce-missing-v-")
+  dir.create(voucher_dir)
+  dir.create(vouch_dir)
+
+  voucher_error <- vouch_with_dir(
+    voucher_dir,
+    tryCatch(
+      {
+        vouch_run("denounce", username = "nobody")
+        ""
+      },
+      error = function(e) conditionMessage(e)
+    )
   )
+  vouch_error <- vouch_with_dir(
+    vouch_dir,
+    vouch_cli(vouch_args("denounce", "nobody"))
+  )
+
+  expect_match(voucher_error, "no VOUCHED file found")
+  expect_true(vouch_error$status != 0L)
+  expect_match(vouch_error$output, "no VOUCHED file found")
 })

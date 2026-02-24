@@ -1,4 +1,3 @@
-# jarl-ignore-file internal_function: parity helpers intentionally call voucher internals.
 vouch_parity_skip <- function() {
   testthat::skip_on_cran()
 
@@ -21,15 +20,6 @@ vouch_with_temp_project <- function(code, prefix = "voucher-test-") {
   path <- tempfile(prefix)
   dir.create(path, recursive = TRUE)
   vouch_with_dir(path, code)
-}
-
-vouch_read_lines <- function(path) {
-  readLines(path, warn = FALSE)
-}
-
-vouch_expect_invisible_value <- function(result, value, info = NULL) {
-  testthat::expect_false(result$visible, info = info)
-  testthat::expect_equal(result$value, value, info = info)
 }
 
 vouch_cli <- function(args) {
@@ -96,7 +86,7 @@ vouch_nu_quote <- function(arg) {
 }
 
 vouch_td <- function(path) {
-  paste0(paste(vouch_read_lines(path), collapse = "\n"), "\n")
+  paste0(paste(readLines(path, warn = FALSE), collapse = "\n"), "\n")
 }
 
 vouch_status_from_output <- function(output) {
@@ -152,11 +142,7 @@ vouch_new_pair_projects <- function(
     root_lines = root_lines,
     github_lines = github_lines
   )
-
-  list(
-    voucher_dir = voucher_dir,
-    vouch_dir = vouch_dir
-  )
+  list(voucher_dir = voucher_dir, vouch_dir = vouch_dir)
 }
 
 vouch_expect_update_parity <- function(
@@ -187,12 +173,12 @@ vouch_expect_update_parity <- function(
 
   testthat::expect_equal(voucher_result$value, vouch_result$output, info = info)
   testthat::expect_equal(
-    vouch_read_lines(voucher_file),
+    readLines(voucher_file, warn = FALSE),
     initial_lines,
     info = info
   )
   testthat::expect_equal(
-    vouch_read_lines(vouch_file),
+    readLines(vouch_file, warn = FALSE),
     initial_lines,
     info = info
   )
@@ -213,103 +199,12 @@ vouch_expect_check_parity <- function(
   testthat::expect_equal(vouch_result$status, expected_code, info = info)
 }
 
-vouch_expect_project_files <- function(
-  path,
-  root_lines = NULL,
-  github_lines = NULL
-) {
-  root_path <- file.path(path, "VOUCHED.td")
-  github_path <- file.path(path, ".github", "VOUCHED.td")
-
-  if (is.null(root_lines)) {
-    testthat::expect_false(file.exists(root_path))
-  } else {
-    testthat::expect_equal(vouch_read_lines(root_path), root_lines)
-  }
-
-  if (is.null(github_lines)) {
-    testthat::expect_false(file.exists(github_path))
-  } else {
-    testthat::expect_equal(vouch_read_lines(github_path), github_lines)
-  }
+vouch_run <- function(command, ...) {
+  fn <- get(command, envir = asNamespace("voucher"))
+  suppressMessages(withVisible(do.call(fn, list(...))))
 }
 
-vouch_error_message <- function(code) {
-  tryCatch(
-    {
-      force(code)
-      ""
-    },
-    error = function(e) conditionMessage(e)
-  )
-}
-
-vouch_expect_missing_file_parity <- function(
-  run_voucher,
-  run_vouch,
-  prefix = "voucher-missing-",
-  pattern = "no VOUCHED file found"
-) {
-  voucher_dir <- tempfile(paste0(prefix, "r-"))
-  vouch_dir <- tempfile(paste0(prefix, "v-"))
-  dir.create(voucher_dir)
-  dir.create(vouch_dir)
-
-  voucher_error <- vouch_with_dir(
-    voucher_dir,
-    vouch_error_message(run_voucher())
-  )
-  vouch_error <- vouch_with_dir(vouch_dir, run_vouch())
-
-  testthat::expect_match(voucher_error, pattern)
-  testthat::expect_true(vouch_error$status != 0L)
-  testthat::expect_match(vouch_error$output, pattern)
-}
-
-vouch_run_add <- function(
-  username,
-  write = FALSE,
-  default_platform = "",
-  vouched_file = ""
-) {
-  suppressMessages(withVisible(voucher:::add(
-    username = username,
-    write = write,
-    default_platform = default_platform,
-    vouched_file = vouched_file
-  )))
-}
-
-vouch_run_denounce <- function(
-  username,
-  write = FALSE,
-  reason = "",
-  default_platform = "",
-  vouched_file = ""
-) {
-  suppressMessages(withVisible(voucher:::denounce(
-    username = username,
-    write = write,
-    reason = reason,
-    default_platform = default_platform,
-    vouched_file = vouched_file
-  )))
-}
-
-vouch_run_check <- function(
-  username,
-  default_platform = "",
-  vouched_file = ""
-) {
-  args <- list(username = username, default_platform = default_platform)
-  if (nzchar(vouched_file)) {
-    args$vouched_file <- vouched_file
-  }
-
-  suppressMessages(withVisible(do.call(voucher:::check, args)))
-}
-
-vouch_cli_args <- function(
+vouch_args <- function(
   command,
   username,
   write = FALSE,
@@ -331,49 +226,4 @@ vouch_cli_args <- function(
     args <- c(args, "--vouched-file", vouched_file)
   }
   args
-}
-
-vouch_add_args <- function(
-  username,
-  write = FALSE,
-  default_platform = "",
-  vouched_file = ""
-) {
-  vouch_cli_args(
-    command = "add",
-    username = username,
-    write = write,
-    default_platform = default_platform,
-    vouched_file = vouched_file
-  )
-}
-
-vouch_denounce_args <- function(
-  username,
-  write = FALSE,
-  reason = "",
-  default_platform = "",
-  vouched_file = ""
-) {
-  vouch_cli_args(
-    command = "denounce",
-    username = username,
-    write = write,
-    reason = reason,
-    default_platform = default_platform,
-    vouched_file = vouched_file
-  )
-}
-
-vouch_check_args <- function(
-  username,
-  default_platform = "",
-  vouched_file = ""
-) {
-  vouch_cli_args(
-    command = "check",
-    username = username,
-    default_platform = default_platform,
-    vouched_file = vouched_file
-  )
 }

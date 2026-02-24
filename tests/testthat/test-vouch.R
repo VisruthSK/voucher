@@ -17,8 +17,11 @@ test_that("use_vouch creates database and .Rbuildignore when missing", {
     expect_snapshot(expect_invisible(voucher:::use_vouch()))
 
     expect_true(file.exists(".github/VOUCHED.td"))
-    expect_equal(vouch_read_lines(".github/VOUCHED.td"), vouch_default_database)
-    expect_equal(vouch_read_lines(".Rbuildignore"), "^\\.github$")
+    expect_equal(
+      readLines(".github/VOUCHED.td", warn = FALSE),
+      vouch_default_database
+    )
+    expect_equal(readLines(".Rbuildignore", warn = FALSE), "^\\.github$")
   })
 })
 
@@ -29,7 +32,7 @@ test_that("use_vouch appends .github rule to existing .Rbuildignore", {
     expect_snapshot(expect_invisible(voucher:::use_vouch()))
 
     expect_equal(
-      vouch_read_lines(".Rbuildignore"),
+      readLines(".Rbuildignore", warn = FALSE),
       c("^data$", "^README\\.Rmd$", "^\\.github$")
     )
   })
@@ -41,7 +44,10 @@ test_that("use_vouch does not duplicate .github rule in .Rbuildignore", {
 
     expect_snapshot(expect_invisible(voucher:::use_vouch()))
 
-    expect_equal(vouch_read_lines(".Rbuildignore"), c("^data$", "^\\.github$"))
+    expect_equal(
+      readLines(".Rbuildignore", warn = FALSE),
+      c("^data$", "^\\.github$")
+    )
   })
 })
 
@@ -51,7 +57,7 @@ test_that("use_vouch exits without changes when database already exists", {
 
     expect_snapshot(expect_invisible(voucher:::use_vouch()))
 
-    expect_equal(vouch_read_lines("VOUCHED.td"), "existing")
+    expect_equal(readLines("VOUCHED.td", warn = FALSE), "existing")
     expect_false(file.exists(".github/VOUCHED.td"))
     expect_false(file.exists(".Rbuildignore"))
   })
