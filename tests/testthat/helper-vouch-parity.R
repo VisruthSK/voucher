@@ -54,7 +54,12 @@ vouch_cli_call <- function(args) {
 
 vouch_nu_command <- function(vouch_mod, args) {
   paste(
-    c("use", vouch_nu_quote(vouch_mod), "*;", vapply(args, vouch_nu_quote, character(1))),
+    c(
+      "use",
+      vouch_nu_quote(vouch_mod),
+      "*;",
+      vapply(args, vouch_nu_quote, character(1))
+    ),
     collapse = " "
   )
 }
