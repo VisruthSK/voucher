@@ -118,6 +118,13 @@ test_that("helpers cover no file and empty text edge cases", {
     voucher:::vouch_resolve_existing_file(),
     "no VOUCHED file found"
   )
+
+  writeLines(character(0), "VOUCHED.td")
+  expect_snapshot(
+    status <- voucher:::check("nobody"),
+    cran = FALSE
+  )
+  expect_equal(status, "unknown")
 })
 
 test_that("helpers cover vector and parsing edge branches", {
@@ -130,8 +137,9 @@ test_that("helpers cover vector and parsing edge branches", {
 
   expect_equal(voucher:::vouch_resolve_existing_file("custom.td"), "custom.td")
 
-  parsed <- voucher:::vouch_parse_entry("alice ")
-  expect_identical(parsed$details, NULL)
+  parsed <- voucher:::vouch_parse_line("alice ")
+  expect_equal(parsed$type, "vouch")
+  expect_equal(parsed$username, "alice")
 
   expect_snapshot(
     status <- voucher:::check("alice"),

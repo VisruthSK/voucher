@@ -7,8 +7,8 @@
 denounce(
   username,
   write = FALSE,
-  default_platform = "",
   reason = "",
+  default_platform = "",
   vouched_file = ""
 )
 }
@@ -17,9 +17,9 @@ denounce(
 
 \item{write}{Write the file in-place (default: output to stdout).}
 
-\item{default_platform}{Assumed platform for entries without explicit platform.}
-
 \item{reason}{Optional reason for denouncement.}
+
+\item{default_platform}{Assumed platform for entries without explicit platform.}
 
 \item{vouched_file}{Path to vouched contributors file (default:
 \code{VOUCHED.td} or \code{.github/VOUCHED.td}).}

@@ -34,6 +34,13 @@
     Message
       v Denounced (bob)
 
+# helpers cover no file and empty text edge cases
+
+    Code
+      status <- voucher:::check("nobody")
+    Message
+      i nobody is unknown
+
 # helpers cover vector and parsing edge branches
 
     Code

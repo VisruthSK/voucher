@@ -49,8 +49,8 @@ add <- function(
 #'
 #' @param username Username to denounce (supports `platform:user` format).
 #' @param write Write the file in-place (default: output to stdout).
-#' @param default_platform Assumed platform for entries without explicit platform.
 #' @param reason Optional reason for denouncement.
+#' @param default_platform Assumed platform for entries without explicit platform.
 #' @param vouched_file Path to vouched contributors file (default:
 #'   `VOUCHED.td` or `.github/VOUCHED.td`).
 #'
@@ -77,8 +77,8 @@ add <- function(
 denounce <- function(
   username,
   write = FALSE,
-  default_platform = "",
   reason = "",
+  default_platform = "",
   vouched_file = ""
 ) {
   vouch_update_file(
@@ -118,33 +118,18 @@ check <- function(
   vouched_file = ""
 ) {
   file <- vouch_resolve_existing_file(vouched_file)
-  target <- vouch_parse_handle(username)
-  target_platform <- if (!is.null(target$platform) && nzchar(target$platform)) {
-    target$platform
-  } else if (nzchar(default_platform)) {
-    tolower(default_platform)
-  } else {
-    NULL
-  }
+  target <- vouch_split_handle(username, default_platform = default_platform)
   status <- "unknown"
 
   for (line in readLines(file, warn = FALSE)) {
-    entry <- vouch_parse_entry(line)
+    entry <- vouch_parse_line(line, default_platform = default_platform)
     if (is.null(entry)) {
       next
     }
 
-    entry_platform <- if (!is.null(entry$platform) && nzchar(entry$platform)) {
-      entry$platform
-    } else if (nzchar(default_platform)) {
-      tolower(default_platform)
-    } else {
-      NULL
-    }
-
-    platform_matches <- is.null(target_platform) ||
-      is.null(entry_platform) ||
-      identical(entry_platform, target_platform)
+    platform_matches <- !nzchar(target$platform) ||
+      !nzchar(entry$platform) ||
+      identical(entry$platform, target$platform)
 
     if (identical(entry$username, target$username) && platform_matches) {
       status <- if (identical(entry$type, "denounce")) {
@@ -174,13 +159,35 @@ vouch_update_file <- function(
 ) {
   type <- match.arg(type)
   file <- vouch_resolve_existing_file(vouched_file)
-  lines <- readLines(file, warn = FALSE) |>
-    vouch_add_or_denounce(
-      username = username,
-      default_platform = default_platform,
-      type = type,
-      details = details
-    )
+  target <- vouch_split_handle(username, default_platform = default_platform)
+  lines <- readLines(file, warn = FALSE)
+  keep <- vapply(
+    lines,
+    function(line) {
+      entry <- vouch_parse_line(line, default_platform = default_platform)
+      if (is.null(entry)) {
+        return(TRUE)
+      }
+
+      platform_matches <- !nzchar(target$platform) ||
+        !nzchar(entry$platform) ||
+        identical(entry$platform, target$platform)
+
+      !(identical(entry$username, target$username) && platform_matches)
+    },
+    logical(1)
+  )
+  details <- trimws(details)
+  handle <- if (nzchar(target$raw_platform)) {
+    paste0(target$raw_platform, ":", target$username)
+  } else {
+    target$username
+  }
+  suffix <- if (nzchar(details)) paste0(" ", details) else ""
+  lines <- c(
+    lines[keep],
+    paste0(if (identical(type, "denounce")) "-" else "", handle, suffix)
+  )
   text <- paste0(paste(lines, collapse = "\n"), "\n")
 
   if (isTRUE(write)) {
@@ -193,97 +200,39 @@ vouch_update_file <- function(
   invisible(text)
 }
 
-vouch_parse_handle <- function(handle) {
-  parts <- strsplit(tolower(as.character(handle)), ":", fixed = TRUE)[[1]]
+vouch_split_handle <- function(handle, default_platform = "") {
+  parts <- strsplit(
+    tolower(trimws(as.character(handle))),
+    ":",
+    fixed = TRUE
+  )[[1]]
   if (length(parts) > 1L) {
-    list(platform = parts[[1]], username = paste(parts[-1], collapse = ":"))
+    raw_platform <- parts[[1]]
+    username <- paste(parts[-1], collapse = ":")
   } else {
-    list(platform = NULL, username = parts[[1]])
+    raw_platform <- ""
+    username <- parts[[1]]
   }
+
+  list(
+    username = username,
+    raw_platform = raw_platform,
+    platform = if (nzchar(raw_platform)) {
+      raw_platform
+    } else {
+      tolower(default_platform)
+    }
+  )
 }
 
-vouch_parse_entry <- function(line) {
+vouch_parse_line <- function(line, default_platform = "") {
   trimmed <- trimws(line)
   if (!nzchar(trimmed) || startsWith(trimmed, "#")) {
     return(NULL)
   }
 
   type <- if (startsWith(trimmed, "-")) "denounce" else "vouch"
-  rest <- if (identical(type, "denounce")) substring(trimmed, 2L) else trimmed
-  first_space <- regexpr(" ", rest, fixed = TRUE)[1]
-
-  if (first_space > 0L) {
-    handle <- substr(rest, 1L, first_space - 1L)
-    details <- substr(rest, first_space + 1L, nchar(rest))
-  } else {
-    handle <- rest
-    details <- NULL
-  }
-
-  parsed <- vouch_parse_handle(handle)
-  list(
-    type = type,
-    platform = parsed$platform,
-    username = parsed$username,
-    details = details
-  )
-}
-
-vouch_add_or_denounce <- function(
-  lines,
-  username,
-  default_platform = "",
-  type = c("vouch", "denounce"),
-  details = ""
-) {
-  type <- match.arg(type)
-  target <- vouch_parse_handle(username)
-  target_platform <- if (!is.null(target$platform) && nzchar(target$platform)) {
-    target$platform
-  } else if (nzchar(default_platform)) {
-    tolower(default_platform)
-  } else {
-    NULL
-  }
-  keep <- rep(TRUE, length(lines))
-
-  for (i in seq_along(lines)) {
-    entry <- vouch_parse_entry(lines[[i]])
-    if (is.null(entry)) {
-      next
-    }
-
-    entry_platform <- if (!is.null(entry$platform) && nzchar(entry$platform)) {
-      entry$platform
-    } else if (nzchar(default_platform)) {
-      tolower(default_platform)
-    } else {
-      NULL
-    }
-
-    platform_matches <- is.null(target_platform) ||
-      is.null(entry_platform) ||
-      identical(entry_platform, target_platform)
-
-    if (identical(entry$username, target$username) && platform_matches) {
-      keep[[i]] <- FALSE
-    }
-  }
-
-  cleaned <- lines[keep]
-  details <- trimws(details)
-
-  prefix <- if (identical(type, "denounce")) "-" else ""
-  handle <- if (!is.null(target$platform) && nzchar(target$platform)) {
-    paste0(target$platform, ":", target$username)
-  } else {
-    target$username
-  }
-  suffix <- if (nzchar(details)) {
-    paste0(" ", details)
-  } else {
-    ""
-  }
-
-  c(cleaned, paste0(prefix, handle, suffix))
+  handle <- strsplit(sub("^-", "", trimmed), " ", fixed = TRUE)[[1]][[1]]
+  parsed <- vouch_split_handle(handle, default_platform = default_platform)
+  list(type = type, username = parsed$username, platform = parsed$platform)
 }
