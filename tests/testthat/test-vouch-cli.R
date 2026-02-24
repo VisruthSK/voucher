@@ -30,12 +30,12 @@ test_that("add writes in-place when write is TRUE", {
 
   writeLines(c("# header", "alice"), "VOUCHED.td")
 
-  output <- capture.output(
-    result <- withVisible(voucher:::add("github:carol", write = TRUE))
+  expect_snapshot(
+    result <- withVisible(voucher:::add("github:carol", write = TRUE)),
+    cran = FALSE
   )
 
   expect_false(result$visible)
-  expect_equal(output, "Added (github:carol) to vouched contributors")
   expect_equal(
     readLines("VOUCHED.td", warn = FALSE),
     c("# header", "alice", "github:carol")
@@ -50,18 +50,22 @@ test_that("check returns vouched denounced and unknown", {
 
   writeLines(c("alice", "-github:bob reason"), "VOUCHED.td")
 
-  out_vouched <- capture.output(status_vouched <- voucher:::check("alice"))
-  out_denounced <- capture.output(
-    status_denounced <- voucher:::check("github:bob")
+  expect_snapshot(
+    status_vouched <- voucher:::check("alice"),
+    cran = FALSE
   )
-  out_unknown <- capture.output(status_unknown <- voucher:::check("charlie"))
+  expect_snapshot(
+    status_denounced <- voucher:::check("github:bob"),
+    cran = FALSE
+  )
+  expect_snapshot(
+    status_unknown <- voucher:::check("charlie"),
+    cran = FALSE
+  )
 
   expect_equal(status_vouched, "vouched")
   expect_equal(status_denounced, "denounced")
   expect_equal(status_unknown, "unknown")
-  expect_equal(out_vouched, "alice is vouched")
-  expect_equal(out_denounced, "github:bob is denounced")
-  expect_equal(out_unknown, "charlie is unknown")
 })
 
 test_that("denounce previews and writes denounced entry", {
@@ -89,17 +93,76 @@ test_that("denounce previews and writes denounced entry", {
     c("# header", "alice", "bob")
   )
 
-  write_out <- capture.output(
+  expect_snapshot(
     result_write <- withVisible(voucher:::denounce(
       "bob",
       reason = "bad actor",
       write = TRUE
-    ))
+    )),
+    cran = FALSE
   )
   expect_false(result_write$visible)
-  expect_equal(write_out, "Denounced (bob)")
   expect_equal(
     readLines(".github/VOUCHED.td", warn = FALSE),
     c("# header", "alice", "-bob bad actor")
+  )
+})
+
+test_that("helpers cover no file and empty text edge cases", {
+  temp_proj <- tempfile("voucher-test-")
+  dir.create(temp_proj)
+  old_wd <- setwd(temp_proj)
+  on.exit(setwd(old_wd), add = TRUE)
+
+  expect_error(
+    voucher:::vouch_resolve_existing_file(),
+    "no VOUCHED file found"
+  )
+})
+
+test_that("helpers cover vector and parsing edge branches", {
+  temp_proj <- tempfile("voucher-test-")
+  dir.create(temp_proj)
+  old_wd <- setwd(temp_proj)
+  on.exit(setwd(old_wd), add = TRUE)
+
+  writeLines(c("# comment", "", "alice"), "VOUCHED.td")
+
+  expect_equal(voucher:::vouch_resolve_existing_file("custom.td"), "custom.td")
+
+  parsed <- voucher:::vouch_parse_entry("alice ")
+  expect_identical(parsed$details, NULL)
+
+  expect_snapshot(
+    status <- voucher:::check("alice"),
+    cran = FALSE
+  )
+  expect_equal(status, "vouched")
+})
+
+test_that("default_platform paths are exercised in check and add", {
+  temp_proj <- tempfile("voucher-test-")
+  dir.create(temp_proj)
+  old_wd <- setwd(temp_proj)
+  on.exit(setwd(old_wd), add = TRUE)
+
+  writeLines(c("github:alice", "bob"), "VOUCHED.td")
+
+  status <- suppressMessages(
+    voucher:::check("bob", default_platform = "github")
+  )
+  expect_equal(status, "vouched")
+
+  invisible(capture.output(
+    voucher:::add(
+      "carol",
+      default_platform = "github",
+      vouched_file = "VOUCHED.td"
+    )
+  ))
+
+  expect_equal(
+    readLines("VOUCHED.td", warn = FALSE),
+    c("github:alice", "bob")
   )
 })

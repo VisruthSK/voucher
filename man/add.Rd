@@ -4,17 +4,17 @@
 \alias{add}
 \title{Add a user to the vouched contributors list.}
 \usage{
-add(username, default_platform = "", vouched_file = "", write = FALSE)
+add(username, write = FALSE, default_platform = "", vouched_file = "")
 }
 \arguments{
 \item{username}{Username to vouch for (supports \code{platform:user} format).}
+
+\item{write}{Write the file in-place (default: output to stdout).}
 
 \item{default_platform}{Assumed platform for entries without explicit platform.}
 
 \item{vouched_file}{Path to vouched contributors file (default:
 \code{VOUCHED.td} or \code{.github/VOUCHED.td}).}
-
-\item{write}{Write the file in-place (default: output to stdout).}
 }
 \value{
 Invisibly returns the updated trustdown text.

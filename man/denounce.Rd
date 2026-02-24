@@ -6,14 +6,16 @@
 \usage{
 denounce(
   username,
+  write = FALSE,
   default_platform = "",
   reason = "",
-  vouched_file = "",
-  write = FALSE
+  vouched_file = ""
 )
 }
 \arguments{
 \item{username}{Username to denounce (supports \code{platform:user} format).}
+
+\item{write}{Write the file in-place (default: output to stdout).}
 
 \item{default_platform}{Assumed platform for entries without explicit platform.}
 
@@ -21,8 +23,6 @@ denounce(
 
 \item{vouched_file}{Path to vouched contributors file (default:
 \code{VOUCHED.td} or \code{.github/VOUCHED.td}).}
-
-\item{write}{Write the file in-place (default: output to stdout).}
 }
 \value{
 Invisibly returns the updated trustdown text.

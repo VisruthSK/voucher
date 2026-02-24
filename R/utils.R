@@ -31,7 +31,6 @@ is_vouch_project <- function(
   FALSE
 }
 
-#' @param filename path to file, including extensions, where `text` should be written
 write_to_path <- function(text, filepath) {
   fs::dir_create(fs::path_dir(filepath), recurse = TRUE)
   writeLines(text, filepath)
