@@ -61,6 +61,23 @@ test_that("add write preserves non-contributor lines when no contributors exist"
   })
 })
 
+test_that("add supports vector usernames and writes once", {
+  vouch_with_temp_project({
+    writeLines(c("# header", "alice", "-bob old", "carol"), "VOUCHED.td")
+
+    result <- suppressMessages(withVisible(voucher:::add(
+      c("bob", "dave"),
+      write = TRUE
+    )))
+
+    expect_invisible_value(result, "# header\nalice\nbob\ncarol\ndave\n")
+    expect_equal(
+      readLines("VOUCHED.td", warn = FALSE),
+      c("# header", "alice", "bob", "carol", "dave")
+    )
+  })
+})
+
 test_that("denounce preview includes reason and does not write", {
   vouch_with_temp_project({
     dir.create(".github")
@@ -94,6 +111,35 @@ test_that("denounce write updates file and emits cli success", {
   })
 })
 
+test_that("denounce supports vector usernames with recycled reason", {
+  vouch_with_temp_project({
+    writeLines(c("alice", "bob", "carol"), "VOUCHED.td")
+
+    result <- suppressMessages(withVisible(voucher:::denounce(
+      c("alice", "carol"),
+      write = TRUE,
+      reason = "bad actor"
+    )))
+
+    expect_invisible_value(result, "-alice bad actor\nbob\n-carol bad actor\n")
+    expect_equal(
+      readLines("VOUCHED.td", warn = FALSE),
+      c("-alice bad actor", "bob", "-carol bad actor")
+    )
+  })
+})
+
+test_that("denounce errors when reason length doesn't match usernames", {
+  vouch_with_temp_project({
+    writeLines("alice", "VOUCHED.td")
+
+    expect_error(
+      voucher:::denounce(c("alice", "bob"), reason = c("x", "y", "z")),
+      "`reason` must have length 1 or match `username` length."
+    )
+  })
+})
+
 test_that("check reports statuses via cli and returns invisibly", {
   vouch_with_temp_project({
     writeLines(c("# header", "", "alice", "-github:bob reason"), "VOUCHED.td")
@@ -110,6 +156,22 @@ test_that("check reports statuses via cli and returns invisibly", {
     expect_invisible_value(vouched, "vouched")
     expect_invisible_value(denounced, "denounced")
     expect_invisible_value(unknown, "unknown")
+  })
+})
+
+test_that("check supports vector usernames and returns named statuses", {
+  vouch_with_temp_project({
+    writeLines(c("alice", "-github:bob reason"), "VOUCHED.td")
+
+    result <- suppressMessages(withVisible(voucher:::check(
+      c("alice", "github:bob", "charlie")
+    )))
+
+    expect_false(result$visible)
+    expect_equal(
+      result$value,
+      c(alice = "vouched", "github:bob" = "denounced", charlie = "unknown")
+    )
   })
 })
 
