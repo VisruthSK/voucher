@@ -6,3 +6,6 @@
 ^air\.toml$
 ^jarl\.toml$
 ^VOUCHED\.td$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

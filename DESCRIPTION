@@ -10,7 +10,7 @@ Description: An R interface for the vouch project, which bills itself as
     to modify the VOUCHED.td database without nushell. voucher does not
     depend on vouch or nushell.
 License: GPL (>= 3)
-URL: https://github.com/VisruthSK/voucher
+URL: https://github.com/VisruthSK/voucher, https://visruthsk.github.io/voucher/
 Depends:
     R (>= 4.1.0)
 Imports: 
