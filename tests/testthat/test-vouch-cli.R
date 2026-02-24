@@ -1,151 +1,154 @@
-test_that("add preview prints updated trustdown and does not write", {
-  temp_proj <- tempfile("voucher-test-")
-  dir.create(temp_proj)
-  old_wd <- setwd(temp_proj)
-  on.exit(setwd(old_wd), add = TRUE)
-
-  dir.create(".github")
-  initial <- c("# header", "alice", "-bob spam")
-  writeLines(initial, ".github/VOUCHED.td")
-
-  expect_snapshot(
-    result <- withVisible(voucher:::add("bob")),
-    cran = FALSE
-  )
-
+# jarl-ignore-file internal_function: tests intentionally exercise voucher internal functions.
+expect_invisible_value <- function(result, value) {
   expect_false(result$visible)
-  expect_equal(result$value, "# header\nalice\nbob\n")
-  expect_equal(readLines(".github/VOUCHED.td", warn = FALSE), initial)
+  expect_equal(result$value, value)
+}
+
+test_that("add preview prints updated trustdown and does not write", {
+  vouch_with_temp_project({
+    dir.create(".github")
+    initial <- c("# header", "alice", "-bob spam")
+    writeLines(initial, ".github/VOUCHED.td")
+
+    expect_snapshot(
+      result <- withVisible(voucher:::add("bob")),
+      cran = FALSE
+    )
+
+    expect_invisible_value(result, "# header\nalice\nbob\n")
+    expect_equal(readLines(".github/VOUCHED.td", warn = FALSE), initial)
+  })
 })
 
 test_that("add write updates file and emits cli success", {
-  temp_proj <- tempfile("voucher-test-")
-  dir.create(temp_proj)
-  old_wd <- setwd(temp_proj)
-  on.exit(setwd(old_wd), add = TRUE)
+  vouch_with_temp_project({
+    writeLines(
+      c("# header", "github:carol", "carol", "-github:carol stale", "alice"),
+      "VOUCHED.td"
+    )
 
-  writeLines(
-    c("# header", "github:carol", "carol", "-github:carol stale", "alice"),
-    "VOUCHED.td"
-  )
+    expect_snapshot(
+      result <- withVisible(voucher:::add(
+        "carol",
+        write = TRUE,
+        default_platform = "github"
+      )),
+      cran = FALSE
+    )
 
-  expect_snapshot(
-    result <- withVisible(voucher:::add(
-      "carol",
-      write = TRUE,
-      default_platform = "github"
-    )),
-    cran = FALSE
-  )
-
-  expect_false(result$visible)
-  expect_equal(result$value, "# header\nalice\ncarol\n")
-  expect_equal(
-    readLines("VOUCHED.td", warn = FALSE),
-    c("# header", "alice", "carol")
-  )
+    expect_invisible_value(result, "# header\nalice\ncarol\n")
+    expect_equal(
+      readLines("VOUCHED.td", warn = FALSE),
+      c("# header", "alice", "carol")
+    )
+  })
 })
 
-test_that("denounce preview trims reason and does not write", {
-  temp_proj <- tempfile("voucher-test-")
-  dir.create(temp_proj)
-  old_wd <- setwd(temp_proj)
-  on.exit(setwd(old_wd), add = TRUE)
+test_that("add write preserves non-contributor lines when no contributors exist", {
+  vouch_with_temp_project({
+    writeLines(c("# header", ""), "VOUCHED.td")
 
-  dir.create(".github")
-  initial <- c("# header", "alice", "bob")
-  writeLines(initial, ".github/VOUCHED.td")
+    result <- suppressMessages(withVisible(voucher:::add(
+      "newuser",
+      write = TRUE
+    )))
 
-  expect_snapshot(
-    result <- withVisible(voucher:::denounce("bob", reason = "  bad actor  ")),
-    cran = FALSE
-  )
+    expect_invisible_value(result, "# header\n\nnewuser\n")
+    expect_equal(
+      readLines("VOUCHED.td", warn = FALSE),
+      c("# header", "", "newuser")
+    )
+  })
+})
 
-  expect_false(result$visible)
-  expect_equal(result$value, "# header\nalice\n-bob bad actor\n")
-  expect_equal(readLines(".github/VOUCHED.td", warn = FALSE), initial)
+test_that("denounce preview includes reason and does not write", {
+  vouch_with_temp_project({
+    dir.create(".github")
+    initial <- c("# header", "alice", "bob")
+    writeLines(initial, ".github/VOUCHED.td")
+
+    expect_snapshot(
+      result <- withVisible(voucher:::denounce("bob", reason = "bad actor")),
+      cran = FALSE
+    )
+
+    expect_invisible_value(result, "# header\nalice\n-bob bad actor\n")
+    expect_equal(readLines(".github/VOUCHED.td", warn = FALSE), initial)
+  })
 })
 
 test_that("denounce write updates file and emits cli success", {
-  temp_proj <- tempfile("voucher-test-")
-  dir.create(temp_proj)
-  old_wd <- setwd(temp_proj)
-  on.exit(setwd(old_wd), add = TRUE)
+  vouch_with_temp_project({
+    writeLines(c("alice", "github:bob"), "VOUCHED.td")
 
-  writeLines(c("alice", "github:bob"), "VOUCHED.td")
+    expect_snapshot(
+      result <- withVisible(voucher:::denounce("github:bob", write = TRUE)),
+      cran = FALSE
+    )
 
-  expect_snapshot(
-    result <- withVisible(voucher:::denounce("github:bob", write = TRUE)),
-    cran = FALSE
-  )
-
-  expect_false(result$visible)
-  expect_equal(result$value, "alice\n-github:bob\n")
-  expect_equal(readLines("VOUCHED.td", warn = FALSE), c("alice", "-github:bob"))
+    expect_invisible_value(result, "alice\n-github:bob\n")
+    expect_equal(
+      readLines("VOUCHED.td", warn = FALSE),
+      c("alice", "-github:bob")
+    )
+  })
 })
 
 test_that("check reports statuses via cli and returns invisibly", {
-  temp_proj <- tempfile("voucher-test-")
-  dir.create(temp_proj)
-  old_wd <- setwd(temp_proj)
-  on.exit(setwd(old_wd), add = TRUE)
+  vouch_with_temp_project({
+    writeLines(c("# header", "", "alice", "-github:bob reason"), "VOUCHED.td")
 
-  writeLines(c("alice", "-github:bob reason"), "VOUCHED.td")
+    expect_snapshot(
+      {
+        vouched <- withVisible(voucher:::check("alice"))
+        denounced <- withVisible(voucher:::check("github:bob"))
+        unknown <- withVisible(voucher:::check("charlie"))
+      },
+      cran = FALSE
+    )
 
-  expect_snapshot(
-    {
-      vouched <- withVisible(voucher:::check("alice"))
-      denounced <- withVisible(voucher:::check("github:bob"))
-      unknown <- withVisible(voucher:::check("charlie"))
-    },
-    cran = FALSE
-  )
-
-  expect_false(vouched$visible)
-  expect_false(denounced$visible)
-  expect_false(unknown$visible)
-  expect_equal(vouched$value, "vouched")
-  expect_equal(denounced$value, "denounced")
-  expect_equal(unknown$value, "unknown")
+    expect_invisible_value(vouched, "vouched")
+    expect_invisible_value(denounced, "denounced")
+    expect_invisible_value(unknown, "unknown")
+  })
 })
 
 test_that("check default_platform changes matching for unqualified handles", {
-  temp_proj <- tempfile("voucher-test-")
-  dir.create(temp_proj)
-  old_wd <- setwd(temp_proj)
-  on.exit(setwd(old_wd), add = TRUE)
+  vouch_with_temp_project({
+    writeLines(c("-github:bob reason", "gitlab:bob", "bob"), "VOUCHED.td")
 
-  writeLines(c("-github:bob reason", "gitlab:bob", "bob"), "VOUCHED.td")
+    expect_snapshot(
+      {
+        github <- withVisible(voucher:::check(
+          "bob",
+          default_platform = "github"
+        ))
+        gitlab <- withVisible(voucher:::check(
+          "bob",
+          default_platform = "gitlab"
+        ))
+        none <- withVisible(voucher:::check("bob"))
+      },
+      cran = FALSE
+    )
 
-  expect_snapshot(
-    {
-      github <- withVisible(voucher:::check("bob", default_platform = "github"))
-      gitlab <- withVisible(voucher:::check("bob", default_platform = "gitlab"))
-      none <- withVisible(voucher:::check("bob"))
-    },
-    cran = FALSE
-  )
-
-  expect_equal(github$value, "denounced")
-  expect_equal(gitlab$value, "vouched")
-  expect_equal(none$value, "denounced")
+    expect_equal(github$value, "denounced")
+    expect_equal(gitlab$value, "vouched")
+    expect_equal(none$value, "denounced")
+  })
 })
 
 test_that("check errors when file is missing and handles empty file", {
-  temp_proj <- tempfile("voucher-test-")
-  dir.create(temp_proj)
-  old_wd <- setwd(temp_proj)
-  on.exit(setwd(old_wd), add = TRUE)
+  vouch_with_temp_project({
+    expect_error(voucher:::check("nobody"), "no VOUCHED file found")
 
-  expect_error(voucher:::check("nobody"), "no VOUCHED file found")
-
-  writeLines(character(0), "VOUCHED.td")
-  expect_snapshot(
-    result <- withVisible(voucher:::check("nobody")),
-    cran = FALSE
-  )
-  expect_false(result$visible)
-  expect_equal(result$value, "unknown")
+    writeLines(character(0), "VOUCHED.td")
+    expect_snapshot(
+      result <- withVisible(voucher:::check("nobody")),
+      cran = FALSE
+    )
+    expect_invisible_value(result, "unknown")
+  })
 })
 
 test_that("line and handle parsers cover comment and platform branches", {
@@ -180,11 +183,14 @@ test_that("line and handle parsers cover comment and platform branches", {
 })
 
 test_that("file resolution helper branches", {
-  temp_proj <- tempfile("voucher-test-")
-  dir.create(temp_proj)
-  old_wd <- setwd(temp_proj)
-  on.exit(setwd(old_wd), add = TRUE)
-
-  expect_error(voucher:::vouch_resolve_existing_file(), "no VOUCHED file found")
-  expect_equal(voucher:::vouch_resolve_existing_file("custom.td"), "custom.td")
+  vouch_with_temp_project({
+    expect_error(
+      voucher:::vouch_resolve_existing_file(),
+      "no VOUCHED file found"
+    )
+    expect_equal(
+      voucher:::vouch_resolve_existing_file("custom.td"),
+      "custom.td"
+    )
+  })
 })
