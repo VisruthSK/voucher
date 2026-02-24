@@ -1,3 +1,19 @@
+#' Initialize vouch in the current project
+#'
+#' Creates a starter `VOUCHED.td` file at `.github/VOUCHED.td` and ensures
+#' `.github` is ignored in package builds by adding `^\\.github$` to
+#' `.Rbuildignore` when needed.
+#'
+#' If a vouch file already exists (`VOUCHED.td` or `.github/VOUCHED.td`), this
+#' function exits without making changes.
+#'
+#' @return Invisibly returns `NULL`.
+#'
+#' @examples
+#' \dontrun{
+#' use_vouch()
+#' }
+#'
 #' @export
 use_vouch <- function() {
   if (is_vouch_project()) {

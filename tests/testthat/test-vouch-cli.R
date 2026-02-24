@@ -251,7 +251,10 @@ test_that("check warns when blame is requested but unavailable", {
   writeLines("alice", "VOUCHED.td")
 
   expect_warning(
-    result <- withVisible(voucher:::check("alice", blame = TRUE)),
+    result <- suppressMessages(withVisible(voucher:::check(
+      "alice",
+      blame = TRUE
+    ))),
     "Unable to resolve git blame author"
   )
 
@@ -264,7 +267,10 @@ test_that("check with blame handles unknown users", {
     writeLines("alice", "VOUCHED.td")
 
     expect_warning(
-      result <- withVisible(voucher:::check("charlie", blame = TRUE)),
+      result <- suppressMessages(withVisible(voucher:::check(
+        "charlie",
+        blame = TRUE
+      ))),
       NA
     )
 
