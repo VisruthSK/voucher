@@ -1,3 +1,4 @@
+# jarl-ignore-file internal_function: tests intentionally exercise voucher internal functions.
 test_that("use_vouch creates database and .Rbuildignore when missing", {
   temp_proj <- tempfile("voucher-test-")
   dir.create(temp_proj)

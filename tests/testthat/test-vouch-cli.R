@@ -1,3 +1,4 @@
+# jarl-ignore-file internal_function: tests intentionally exercise voucher internal functions.
 test_that("add preview prints updated trustdown and does not write", {
   temp_proj <- tempfile("voucher-test-")
   dir.create(temp_proj)

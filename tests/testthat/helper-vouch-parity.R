@@ -1,3 +1,4 @@
+# jarl-ignore-file internal_function: parity helpers intentionally call voucher internals.
 vouch_parity_skip <- function() {
   testthat::skip_on_cran()
 

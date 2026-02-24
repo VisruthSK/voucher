@@ -1,3 +1,4 @@
+# jarl-ignore-file internal_function: tests intentionally exercise voucher internal functions.
 test_that("vouch_gha writes every workflow from inst templates", {
   actions <- c(
     "check-issue",
