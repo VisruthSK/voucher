@@ -36,3 +36,13 @@ test_that("vouch_gha validates action argument", {
 test_that("vouch_gha errors when action is missing", {
   expect_snapshot_failure(voucher:::vouch_gha())
 })
+
+test_that("find_vouch_workflow_template errors when template is missing", {
+  expect_error(
+    voucher:::find_vouch_workflow_template(
+      "not-a-real-template",
+      package = "voucher"
+    ),
+    "Could not find workflow template"
+  )
+})

@@ -1,5 +1,5 @@
 use_vouch <- function() {
-  if (exit_if_vouch_project()) {
+  if (is_vouch_project()) {
     return(invisible(NULL))
   }
 
