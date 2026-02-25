@@ -1,8 +1,8 @@
 Package: voucher
 Title: Trustdown Interface for R
-Version: 0.0.0.9000
+Version: 1.0.0
 Authors@R: 
-    person("Visruth", "Srimath Kandali", , "public@visruth.com", role = c("aut", "cre"),
+    person("Visruth", "Srimath Kandali", , "public@visruth.com", role = c("aut", "cre", "cph"),
            comment = c(ORCID = "0009-0005-9097-0688"))
 Description: An R interface for the vouch project, which bills itself as
     "a community trust management system based on explicit vouches to
