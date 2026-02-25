@@ -16,5 +16,5 @@ Please list the copyright holder for the work you are submitting
 By submitting this pull request, the copyright holder is agreeing to
 license the submitted work under the following licenses:
 
-- Code: BSD 3-clause (https://opensource.org/licenses/BSD-3-Clause)
-- Documentation: CC-BY 4.0 (https://creativecommons.org/licenses/by/4.0/)
+- Code: GPL-3.0-or-later (https://opensource.org/licenses/GPL-3.0-or-later)
+- Documentation: MIT (https://opensource.org/licenses/MIT)
