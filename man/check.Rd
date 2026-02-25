@@ -7,7 +7,8 @@
 check(username, default_platform = "", vouched_file = "", blame = FALSE)
 }
 \arguments{
-\item{username}{Username to check (supports \code{platform:user} format).}
+\item{username}{Username to check (supports \code{platform:user} format).
+Missing values (\code{NA}) are dropped with an informational message.}
 
 \item{default_platform}{Assumed platform for entries without explicit platform.}
 

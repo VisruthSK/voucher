@@ -311,6 +311,85 @@ test_that("check errors when file is missing and handles empty file", {
   })
 })
 
+test_that("empty usernames fail with clear validation errors", {
+  vouch_with_temp_project({
+    writeLines("alice", "VOUCHED.td")
+
+    expect_error(
+      voucher:::add("", write = TRUE),
+      "`username` must not contain empty values."
+    )
+    expect_error(
+      voucher:::denounce("", write = TRUE),
+      "`username` must not contain empty values."
+    )
+    expect_error(
+      voucher:::check(""),
+      "`username` must not contain empty values."
+    )
+  })
+})
+
+test_that("missing usernames are dropped with an informational message", {
+  vouch_with_temp_project({
+    writeLines(c("alice", "-bob spam"), "VOUCHED.td")
+
+    expect_message(
+      add_result <- withVisible(voucher:::add(c("carol", NA), write = TRUE)),
+      "Dropped 1 missing `username` value"
+    )
+    expect_invisible_value(add_result, "alice\n-bob spam\ncarol\n")
+    expect_equal(
+      readLines("VOUCHED.td", warn = FALSE),
+      c("alice", "-bob spam", "carol")
+    )
+
+    expect_message(
+      denounce_result <- withVisible(voucher:::denounce(
+        c("alice", NA),
+        write = TRUE,
+        reason = c("bad actor", "unused")
+      )),
+      "Dropped 1 missing `username` value"
+    )
+    expect_invisible_value(
+      denounce_result,
+      "-alice bad actor\n-bob spam\ncarol\n"
+    )
+    expect_equal(
+      readLines("VOUCHED.td", warn = FALSE),
+      c("-alice bad actor", "-bob spam", "carol")
+    )
+
+    expect_message(
+      check_result <- withVisible(voucher:::check(c("carol", NA))),
+      "Dropped 1 missing `username` value"
+    )
+    expect_invisible_value(check_result, "vouched")
+  })
+})
+
+test_that("all-missing usernames become a no-op after dropping NAs", {
+  vouch_with_temp_project({
+    writeLines(c("alice", "-bob spam"), "VOUCHED.td")
+    initial <- readLines("VOUCHED.td", warn = FALSE)
+
+    expect_message(
+      add_result <- withVisible(voucher:::add(NA, write = TRUE)),
+      "Dropped 1 missing `username` value"
+    )
+    expect_invisible_value(add_result, "alice\n-bob spam\n")
+    expect_equal(readLines("VOUCHED.td", warn = FALSE), initial)
+
+    expect_message(
+      check_result <- withVisible(voucher:::check(NA)),
+      "Dropped 1 missing `username` value"
+    )
+    expect_false(check_result$visible)
+    expect_equal(check_result$value, character(0))
+  })
+})
+
 test_that("line and handle parsers cover comment and platform branches", {
   expect_null(voucher:::vouch_parse_line("# comment"))
   expect_null(voucher:::vouch_parse_line("   "))

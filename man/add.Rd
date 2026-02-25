@@ -7,7 +7,8 @@
 add(username, write = FALSE, default_platform = "", vouched_file = "")
 }
 \arguments{
-\item{username}{Username to vouch for (supports \code{platform:user} format).}
+\item{username}{Username to vouch for (supports \code{platform:user} format).
+Missing values (\code{NA}) are dropped with an informational message.}
 
 \item{write}{Write the file in-place (default: output to stdout).}
 

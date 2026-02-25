@@ -13,7 +13,8 @@ denounce(
 )
 }
 \arguments{
-\item{username}{Username to denounce (supports \code{platform:user} format).}
+\item{username}{Username to denounce (supports \code{platform:user} format).
+Missing values (\code{NA}) are dropped with an informational message.}
 
 \item{write}{Write the file in-place (default: output to stdout).}
 

@@ -4,6 +4,7 @@
 #' (vouched or denounced) for that user first.
 #'
 #' @param username Username to vouch for (supports `platform:user` format).
+#'   Missing values (`NA`) are dropped with an informational message.
 #' @param write Write the file in-place (default: output to stdout).
 #' @param default_platform Assumed platform for entries without explicit platform.
 #' @param vouched_file Path to vouched contributors file (default:
@@ -47,6 +48,7 @@ add <- function(
 #' An optional reason can be provided which will be added after the username.
 #'
 #' @param username Username to denounce (supports `platform:user` format).
+#'   Missing values (`NA`) are dropped with an informational message.
 #' @param write Write the file in-place (default: output to stdout).
 #' @param reason Optional reason for denouncement.
 #' @param default_platform Assumed platform for entries without explicit platform.
@@ -95,6 +97,7 @@ denounce <- function(
 #' This checks if a user is vouched, denounced, or unknown.
 #'
 #' @param username Username to check (supports `platform:user` format).
+#'   Missing values (`NA`) are dropped with an informational message.
 #' @param default_platform Assumed platform for entries without explicit platform.
 #' @param vouched_file Path to vouched contributors file (default:
 #'   `VOUCHED.td` or `.github/VOUCHED.td`).
@@ -118,7 +121,13 @@ check <- function(
   blame = FALSE
 ) {
   file <- vouch_resolve_existing_file(vouched_file)
-  usernames <- as.character(username)
+  validated_usernames <- vouch_prepare_usernames(username)
+  usernames <- validated_usernames$usernames
+
+  if (length(usernames) == 0L) {
+    return(invisible(character(0)))
+  }
+
   entries <- readLines(file, warn = FALSE) |>
     lapply(vouch_parse_line, default_platform = default_platform)
   matched_lines <- vapply(
@@ -255,30 +264,47 @@ vouch_update_file <- function(
   details = ""
 ) {
   type <- match.arg(type)
-  usernames <- as.character(username)
+  validated_usernames <- vouch_prepare_usernames(username)
+  usernames <- validated_usernames$usernames
+  original_user_count <- length(validated_usernames$keep)
+  kept_user_count <- length(usernames)
+
   arg_name <- if (identical(type, "denounce")) "reason" else "details"
   details <- trimws(as.character(details))
+  details[is.na(details)] <- ""
 
-  if (!(length(details) %in% c(1L, length(usernames)))) {
+  if (!(length(details) %in% c(1L, original_user_count, kept_user_count))) {
     cli::cli_abort(
       "{.arg {arg_name}} must have length 1 or match {.arg username} length."
     )
   }
+
   if (length(details) == 1L) {
-    details <- rep(details, length(usernames))
+    details <- rep(details, kept_user_count)
+  } else if (length(details) == original_user_count) {
+    details <- details[validated_usernames$keep]
   }
 
   write_message <- c(
-    vouch = "Added ({username}) to vouched contributors",
-    denounce = "Denounced ({username})"
+    vouch = "Added ({usernames}) to vouched contributors",
+    denounce = "Denounced ({usernames})"
   )[[type]]
-  if (length(usernames) > 1L) {
+  if (kept_user_count > 1L) {
     write_message <- c(
       vouch = "Added ({length(usernames)}) users to vouched contributors",
       denounce = "Denounced ({length(usernames)}) users"
     )[[type]]
   }
   file <- vouch_resolve_existing_file(vouched_file)
+  existing_lines <- readLines(file, warn = FALSE)
+
+  if (kept_user_count == 0L) {
+    if (!isTRUE(write)) {
+      cli::cat_line(existing_lines)
+    }
+    return(invisible(paste0(paste(existing_lines, collapse = "\n"), "\n")))
+  }
+
   targets <- lapply(
     usernames,
     vouch_split_handle,
@@ -301,7 +327,7 @@ vouch_update_file <- function(
       )
     },
     seq_along(targets),
-    init = readLines(file, warn = FALSE)
+    init = existing_lines
   )
   text <- paste0(paste(lines, collapse = "\n"), "\n")
 
@@ -402,4 +428,23 @@ vouch_parse_line <- function(line, default_platform = "") {
   handle <- strsplit(sub("^-", "", trimmed), " ", fixed = TRUE)[[1]][[1]]
   parsed <- vouch_split_handle(handle, default_platform = default_platform)
   list(type = type, username = parsed$username, platform = parsed$platform)
+}
+
+vouch_prepare_usernames <- function(username) {
+  keep <- !is.na(username)
+  n_missing <- sum(!keep)
+
+  if (n_missing > 0L) {
+    cli::cli_alert_info(
+      "Dropped {n_missing} missing {.arg username} value{?s} ({.val NA})."
+    )
+  }
+
+  usernames <- trimws(username[keep])
+
+  if (!all(nzchar(usernames))) {
+    cli::cli_abort("{.arg username} must not contain empty values.")
+  }
+
+  list(usernames = usernames, keep = keep)
 }
