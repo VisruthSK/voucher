@@ -20,7 +20,8 @@ denounce(
 
 - username:
 
-  Username to denounce (supports `platform:user` format).
+  Username to denounce (supports `platform:user` format). Missing values
+  (`NA`) are dropped with an informational message.
 
 - write:
 

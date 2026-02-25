@@ -12,7 +12,8 @@ check(username, default_platform = "", vouched_file = "", blame = FALSE)
 
 - username:
 
-  Username to check (supports `platform:user` format).
+  Username to check (supports `platform:user` format). Missing values
+  (`NA`) are dropped with an informational message.
 
 - default_platform:
 

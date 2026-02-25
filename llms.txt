@@ -1,12 +1,26 @@
 # voucher
 
-[voucher](https://github.com/VisruthSK/voucher) is a R interface to
-[`vouch`](https://github.com/mitchellh/vouch/), a “community trust
-management system based on explicit vouches to participate.”
+[voucher](https://github.com/VisruthSK/voucher) is a R interface to a
+[Trustdown
+database](https://github.com/mitchellh/vouch/?tab=readme-ov-file#vouched-file-format)
+as used by [`vouch`](https://github.com/mitchellh/vouch/), a “community
+trust management system based on explicit vouches to participate.” This
+package directly interacts with the vouched file format and doesn’t rely
+on `vouch` or Nushell.
+
+From the `vouch` README:
+
+> People must be **vouched for** before interacting with certain parts
+> of a project (the exact parts are configurable to the project to
+> enforce). People can also be explicitly **denounced** to block them
+> from interacting with the project.
+
+Read more about why you may want to use vouching in the [`vouch`
+README](https://github.com/mitchellh/vouch/?tab=readme-ov-file#why).
 
 ## What `voucher` provides
 
-Subset of `vouch`’s behavior behavior:
+Subset of `vouch`’s behavior:
 
 - Initialize a project trust file (`VOUCHED.td`) with
   [`use_vouch()`](https://visruthsk.github.io/voucher/reference/use_vouch.md)

@@ -13,7 +13,8 @@ add(username, write = FALSE, default_platform = "", vouched_file = "")
 
 - username:
 
-  Username to vouch for (supports `platform:user` format).
+  Username to vouch for (supports `platform:user` format). Missing
+  values (`NA`) are dropped with an informational message.
 
 - write:
 
