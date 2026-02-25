@@ -387,6 +387,13 @@ test_that("all-missing usernames become a no-op after dropping NAs", {
     )
     expect_false(check_result$visible)
     expect_equal(check_result$value, character(0))
+
+    expect_message(
+      preview_result <- withVisible(voucher:::add(NA, write = FALSE)),
+      "Dropped 1 missing `username` value"
+    )
+    expect_invisible_value(preview_result, "alice\n-bob spam\n")
+    expect_equal(readLines("VOUCHED.td", warn = FALSE), initial)
   })
 })
 
