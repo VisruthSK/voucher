@@ -8,7 +8,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/VisruthSK/voucher/blob/main/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/VisruthSK/voucher/blob/v1.0.1/DESCRIPTION)
 
 Srimath Kandali V (2026). *voucher: Trustdown Interface for R*. R
 package version 1.0.0, <https://github.com/VisruthSK/voucher>.
