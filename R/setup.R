@@ -7,10 +7,15 @@
 #' If a vouch file already exists (`VOUCHED.td` or `.github/VOUCHED.td`), this
 #' function exits without making changes.
 #'
-#' @return Invisibly returns `NULL`.
+#' @return Invisibly returns `NULL`. Called for the side effects of writing a
+#'   starter `VOUCHED.td` file and updating `.Rbuildignore`.
 #'
 #' @examples
 #' \dontrun{
+#' project <- file.path(tempdir(), "voucher-use-vouch-example")
+#' dir.create(project, recursive = TRUE)
+#' old <- setwd(project)
+#' on.exit(setwd(old), add = TRUE)
 #' use_vouch()
 #' }
 #'
@@ -21,6 +26,7 @@ use_vouch <- function() {
   }
 
   vouched_path <- fs::path(".github", "VOUCHED.td")
+  rbuildignore_path <- ".Rbuildignore"
 
   default_vouched_text <- c(
     "# Copied from vouch repo:",
@@ -37,10 +43,10 @@ use_vouch <- function() {
   write_to_path(default_vouched_text, vouched_path)
 
   if (
-    !fs::file_exists(".Rbuildignore") ||
-      !("^\\.github$" %in% readLines(".Rbuildignore", warn = FALSE))
+    !fs::file_exists(rbuildignore_path) ||
+      !("^\\.github$" %in% readLines(rbuildignore_path, warn = FALSE))
   ) {
-    cat("^\\.github$", "\n", file = ".Rbuildignore", append = TRUE, sep = "")
+    cat("^\\.github$", "\n", file = rbuildignore_path, append = TRUE, sep = "")
   }
   cli::cli_alert_info(
     "Wrote vouch database to {.path {vouched_path}}."

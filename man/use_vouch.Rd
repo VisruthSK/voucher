@@ -7,7 +7,8 @@
 use_vouch()
 }
 \value{
-Invisibly returns \code{NULL}.
+Invisibly returns \code{NULL}. Called for the side effects of writing a
+starter \code{VOUCHED.td} file and updating \code{.Rbuildignore}.
 }
 \description{
 Creates a starter \code{VOUCHED.td} file at \code{.github/VOUCHED.td} and ensures
@@ -20,6 +21,10 @@ function exits without making changes.
 }
 \examples{
 \dontrun{
+project <- file.path(tempdir(), "voucher-use-vouch-example")
+dir.create(project, recursive = TRUE)
+old <- setwd(project)
+on.exit(setwd(old), add = TRUE)
 use_vouch()
 }
 

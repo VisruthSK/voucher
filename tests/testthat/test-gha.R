@@ -60,6 +60,26 @@ test_that("vouch_gha errors when action is missing", {
   expect_snapshot_failure(voucher:::vouch_gha())
 })
 
+test_that("vouch_gha errors when save_as length does not match action", {
+  expect_error(
+    voucher:::vouch_gha(
+      c("check-issue", "check-pr"),
+      save_as = "one.yaml"
+    ),
+    "`save_as` must have the same length as `action`."
+  )
+})
+
+test_that("vouch_gha errors when save_as contains a path", {
+  expect_error(
+    voucher:::vouch_gha(
+      "check-issue",
+      save_as = "nested/check-issue.yaml"
+    ),
+    "must be file names, not paths"
+  )
+})
+
 test_that("find_vouch_workflow_template errors when template is missing", {
   expect_error(
     voucher:::find_vouch_workflow_template(

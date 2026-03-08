@@ -2,19 +2,29 @@
 % Please edit documentation in R/GHA.R
 \name{vouch_gha}
 \alias{vouch_gha}
-\title{Use vouch GitHub Actions}
+\title{Use 'vouch' GitHub Actions}
 \usage{
 vouch_gha(
   action = c("check-issue", "check-pr", "manage-by-discussion", "manage-by-issue",
-    "sync-codeowners")
+    "sync-codeowners"),
+  save_as = NULL
 )
 }
 \arguments{
 \item{action}{The GitHub Action template workflow to add.}
+
+\item{save_as}{Name of the local workflow file. Defaults to \code{action} with a
+\code{.yaml} extension. Do not specify any other part of the path; workflow
+files are always written under \code{.github/workflows}.}
+}
+\value{
+Invisibly returns a character vector of workflow file paths. Each
+element is a length-1 character string giving the path written for the
+corresponding requested action under \code{.github/workflows}.
 }
 \description{
-Function to add some vouch workflows, like \code{usethis::use_github_action()}.
-Details about the actions can be found at
+Function to add some 'vouch' workflows, like
+\code{usethis::use_github_action()}. Details about the actions can be found at
 \url{https://github.com/mitchellh/vouch/tree/main/action}; short summaries
 copied from there follow.
 }
@@ -34,3 +44,13 @@ sync-codeowners: Sync CODEOWNERS entries into the VOUCHED list. The action expan
 Documentation for this function is copied nearly verbatim from \href{https://github.com/mitchellh/vouch}{\code{vouch}} and is owned by Mitchell Hashimoto.
 }
 
+\examples{
+\dontrun{
+project <- file.path(tempdir(), "voucher-gha-example")
+dir.create(project, recursive = TRUE)
+old <- setwd(project)
+on.exit(setwd(old), add = TRUE)
+vouch_gha("check-issue")
+}
+
+}

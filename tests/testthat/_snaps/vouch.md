@@ -25,4 +25,3 @@
       expect_invisible(voucher:::use_vouch())
     Message
       i Existing vouch database found at 'VOUCHED.td'. Exiting without any changes.
-

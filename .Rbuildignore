@@ -11,3 +11,6 @@
 ^pkgdown$
 ^cran-comments\.md$
 ^CRAN-SUBMISSION$
+^AGENTS\.md$
+^tests/testthat/\.Rbuildignore$
+^tests/testthat/\.github$
