@@ -13,7 +13,7 @@ Description: An 'R' interface to the 'vouch' project
     'Nushell'.
 License: GPL (>= 3)
 URL: https://github.com/VisruthSK/voucher,
-    https://visruthsk.github.io/voucher/
+    https://voucher.visruth.com/
 Depends:
     R (>= 4.1.0)
 Imports: 
