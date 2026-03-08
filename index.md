@@ -1,12 +1,12 @@
 # voucher
 
-[voucher](https://github.com/VisruthSK/voucher) is a R interface to a
+[voucher](https://github.com/VisruthSK/voucher) is an R interface to a
 [Trustdown
 database](https://github.com/mitchellh/vouch/?tab=readme-ov-file#vouched-file-format)
 as used by [`vouch`](https://github.com/mitchellh/vouch/), a “community
 trust management system based on explicit vouches to participate.” This
 package directly interacts with the vouched file format and doesn’t rely
-on `vouch` or Nushell.
+on `vouch` or `Nushell`.
 
 From the `vouch` README:
 
@@ -45,7 +45,12 @@ pak::pak("VisruthSK/voucher")
 ``` r
 library(voucher)
 
-# Initialize vouch files in the current project
+project <- file.path(tempdir(), "voucher-demo")
+dir.create(project, recursive = TRUE)
+old <- setwd(project)
+on.exit(setwd(old), add = TRUE)
+
+# Initialize vouch files in a temporary project
 use_vouch()
 
 add("alice", write = TRUE)

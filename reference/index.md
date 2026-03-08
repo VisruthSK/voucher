@@ -12,4 +12,4 @@
 - [`use_vouch()`](https://visruthsk.github.io/voucher/reference/use_vouch.md)
   : Initialize vouch in the current project
 - [`vouch_gha()`](https://visruthsk.github.io/voucher/reference/vouch_gha.md)
-  : Use vouch GitHub Actions
+  : Use 'vouch' GitHub Actions

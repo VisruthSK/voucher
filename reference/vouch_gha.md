@@ -1,6 +1,6 @@
-# Use vouch GitHub Actions
+# Use 'vouch' GitHub Actions
 
-Function to add some vouch workflows, like
+Function to add some 'vouch' workflows, like
 `usethis::use_github_action()`. Details about the actions can be found
 at <https://github.com/mitchellh/vouch/tree/main/action>; short
 summaries copied from there follow.
@@ -10,7 +10,8 @@ summaries copied from there follow.
 ``` r
 vouch_gha(
   action = c("check-issue", "check-pr", "manage-by-discussion", "manage-by-issue",
-    "sync-codeowners")
+    "sync-codeowners"),
+  save_as = NULL
 )
 ```
 
@@ -19,6 +20,18 @@ vouch_gha(
 - action:
 
   The GitHub Action template workflow to add.
+
+- save_as:
+
+  Name of the local workflow file. Defaults to `action` with a `.yaml`
+  extension. Do not specify any other part of the path; workflow files
+  are always written under `.github/workflows`.
+
+## Value
+
+Invisibly returns a character vector of workflow file paths. Each
+element is a length-1 character string giving the path written for the
+corresponding requested action under `.github/workflows`.
 
 ## Details
 
@@ -57,3 +70,15 @@ to the vouch file.
 Documentation for this function is copied nearly verbatim from
 [`vouch`](https://github.com/mitchellh/vouch) and is owned by Mitchell
 Hashimoto.
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+project <- file.path(tempdir(), "voucher-gha-example")
+dir.create(project, recursive = TRUE)
+old <- setwd(project)
+on.exit(setwd(old), add = TRUE)
+vouch_gha("check-issue")
+} # }
+```

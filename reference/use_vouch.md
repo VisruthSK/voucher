@@ -12,7 +12,8 @@ use_vouch()
 
 ## Value
 
-Invisibly returns `NULL`.
+Invisibly returns `NULL`. Called for the side effects of writing a
+starter `VOUCHED.td` file and updating `.Rbuildignore`.
 
 ## Details
 
@@ -23,6 +24,10 @@ this function exits without making changes.
 
 ``` r
 if (FALSE) { # \dontrun{
+project <- file.path(tempdir(), "voucher-use-vouch-example")
+dir.create(project, recursive = TRUE)
+old <- setwd(project)
+on.exit(setwd(old), add = TRUE)
 use_vouch()
 } # }
 ```
