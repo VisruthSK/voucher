@@ -10,11 +10,11 @@
 Source:
 [`DESCRIPTION`](https://github.com/VisruthSK/voucher/blob/main/DESCRIPTION)
 
-Srimath Kandali V (2026). *voucher: Trustdown Interface for R*. R
+Srimath Kandali V (2026). *voucher: 'Trustdown' Interface for R*. R
 package version 1.0.2, <https://github.com/VisruthSK/voucher>.
 
     @Manual{,
-      title = {voucher: Trustdown Interface for R},
+      title = {voucher: 'Trustdown' Interface for R},
       author = {Visruth {Srimath Kandali}},
       year = {2026},
       note = {R package version 1.0.2},
