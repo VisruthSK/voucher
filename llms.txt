@@ -36,6 +36,7 @@ Subset of `vouch`’s behavior:
 ## Installation
 
 ``` r
+
 # install.packages("pak")
 pak::pak("VisruthSK/voucher")
 ```
@@ -43,6 +44,7 @@ pak::pak("VisruthSK/voucher")
 ## Small workflow
 
 ``` r
+
 library(voucher)
 
 project <- file.path(tempdir(), "voucher-demo")
