@@ -23,15 +23,15 @@ README](https://github.com/mitchellh/vouch/?tab=readme-ov-file#why).
 Subset of `vouch`’s behavior:
 
 - Initialize a project trust file (`VOUCHED.td`) with
-  [`use_vouch()`](https://visruthsk.github.io/voucher/reference/use_vouch.md)
+  [`use_vouch()`](https://voucher.visruth.com/reference/use_vouch.md)
 - Add vouched contributors with
-  [`add()`](https://visruthsk.github.io/voucher/reference/add.md)
+  [`add()`](https://voucher.visruth.com/reference/add.md)
 - Denounce contributors with
-  [`denounce()`](https://visruthsk.github.io/voucher/reference/denounce.md)
+  [`denounce()`](https://voucher.visruth.com/reference/denounce.md)
 - Check status (`vouched`, `denounced`, `unknown`) of users with
-  [`check()`](https://visruthsk.github.io/voucher/reference/check.md)
+  [`check()`](https://voucher.visruth.com/reference/check.md)
 - Add vouch GitHub Actions workflows with
-  [`vouch_gha()`](https://visruthsk.github.io/voucher/reference/vouch_gha.md)
+  [`vouch_gha()`](https://voucher.visruth.com/reference/vouch_gha.md)
 
 ## Installation
 
@@ -79,15 +79,15 @@ vouch_gha(c("check-issue", "check-pr"))
 
 ## All functions
 
-- [`add()`](https://visruthsk.github.io/voucher/reference/add.md) : Add
-  a user to the vouched contributors list.
-- [`check()`](https://visruthsk.github.io/voucher/reference/check.md) :
-  Check a user's vouch status.
-- [`denounce()`](https://visruthsk.github.io/voucher/reference/denounce.md)
-  : Denounce a user by adding them to the VOUCHED file with a minus
+- [`add()`](https://voucher.visruth.com/reference/add.md) : Add a user
+  to the vouched contributors list.
+- [`check()`](https://voucher.visruth.com/reference/check.md) : Check a
+  user's vouch status.
+- [`denounce()`](https://voucher.visruth.com/reference/denounce.md) :
+  Denounce a user by adding them to the VOUCHED file with a minus
   prefix.
-- [`use_vouch()`](https://visruthsk.github.io/voucher/reference/use_vouch.md)
-  : Initialize vouch in the current project
-- [`vouch_gha()`](https://visruthsk.github.io/voucher/reference/vouch_gha.md)
-  : Use 'vouch' GitHub Actions
+- [`use_vouch()`](https://voucher.visruth.com/reference/use_vouch.md) :
+  Initialize vouch in the current project
+- [`vouch_gha()`](https://voucher.visruth.com/reference/vouch_gha.md) :
+  Use 'vouch' GitHub Actions
 

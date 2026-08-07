@@ -23,15 +23,15 @@ README](https://github.com/mitchellh/vouch/?tab=readme-ov-file#why).
 Subset of `vouch`’s behavior:
 
 - Initialize a project trust file (`VOUCHED.td`) with
-  [`use_vouch()`](https://visruthsk.github.io/voucher/reference/use_vouch.md)
+  [`use_vouch()`](https://voucher.visruth.com/reference/use_vouch.md)
 - Add vouched contributors with
-  [`add()`](https://visruthsk.github.io/voucher/reference/add.md)
+  [`add()`](https://voucher.visruth.com/reference/add.md)
 - Denounce contributors with
-  [`denounce()`](https://visruthsk.github.io/voucher/reference/denounce.md)
+  [`denounce()`](https://voucher.visruth.com/reference/denounce.md)
 - Check status (`vouched`, `denounced`, `unknown`) of users with
-  [`check()`](https://visruthsk.github.io/voucher/reference/check.md)
+  [`check()`](https://voucher.visruth.com/reference/check.md)
 - Add vouch GitHub Actions workflows with
-  [`vouch_gha()`](https://visruthsk.github.io/voucher/reference/vouch_gha.md)
+  [`vouch_gha()`](https://voucher.visruth.com/reference/vouch_gha.md)
 
 ## Installation
 

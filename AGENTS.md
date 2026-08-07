@@ -13,7 +13,7 @@ functionally blocked.
 
 - No manual edits: `.Rd`, `NAMESPACE`
 - Use `devtools::document()`, `test()`,
-  [`check()`](https://visruthsk.github.io/voucher/reference/check.md)
+  [`check()`](https://voucher.visruth.com/reference/check.md)
 - Deps: prefer Base R or current closure. Permission required for new
   deps to make code better
 - Add deps via `usethis::use_import_from()` or `use_package()`
