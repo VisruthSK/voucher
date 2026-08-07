@@ -47,17 +47,14 @@ vouch_cli <- function(args) {
 }
 
 vouch_cli_call <- function(args) {
-  vouch_bin <- Sys.which("vouch")
+  vouch_mod <- Sys.getenv("VOUCH_LIB_DIR")
   nu_bin <- Sys.which("nu")
 
-  if (identical(basename(dirname(vouch_bin)), ".vouch-bin") && nzchar(nu_bin)) {
-    vouch_mod <- file.path(dirname(dirname(vouch_bin)), "vouch")
-    if (file.exists(vouch_mod)) {
-      return(list(
-        command = nu_bin,
-        args = c("--no-config-file", "-c", vouch_nu_command(vouch_mod, args))
-      ))
-    }
+  if (nzchar(vouch_mod) && nzchar(nu_bin)) {
+    return(list(
+      command = nu_bin,
+      args = c("--no-config-file", "-c", vouch_nu_command(vouch_mod, args))
+    ))
   }
 
   list(command = "vouch", args = args)

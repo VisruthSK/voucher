@@ -23,6 +23,11 @@ jobs:
         with:
           use-public-rspm: true
 
+      # setup-vouch takes the newest nushell, and only if nu is not already here
+      - uses: hustcer/setup-nu@v3
+        with:
+          version: "0.113.1"
+
       - uses: mitchellh/vouch/action/setup-vouch@v1
 
       - uses: r-lib/actions/setup-r-dependencies@v2
