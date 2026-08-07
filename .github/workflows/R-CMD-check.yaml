@@ -41,6 +41,12 @@ jobs:
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
 
+      # setup-vouch takes the newest nushell, and only if nu is not already here
+      - if: runner.os != 'Windows'
+        uses: hustcer/setup-nu@v3
+        with:
+          version: "0.113.1"
+
       - if: runner.os != 'Windows'
         uses: mitchellh/vouch/action/setup-vouch@v1
 
